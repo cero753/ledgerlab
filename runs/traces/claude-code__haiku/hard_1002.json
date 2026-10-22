@@ -1,0 +1,36 @@
+{
+ "record": {
+  "model": "claude-code/haiku",
+  "difficulty": "hard",
+  "seed": 1002,
+  "reward": 1.0,
+  "fixed_fraction": 1.0,
+  "solved": true,
+  "integrity": 1.0,
+  "bugs_fixed": [
+   "crosslink_wrong",
+   "terminal_not_discounted",
+   "tax_on_ebitda",
+   "period_mislink",
+   "anchor_slip"
+  ],
+  "bugs_missed": [],
+  "damaged_cells": [],
+  "benign_rewrites": 0,
+  "hardcoded_cells": [],
+  "bugs": [
+   "crosslink_wrong",
+   "terminal_not_discounted",
+   "tax_on_ebitda",
+   "period_mislink",
+   "anchor_slip"
+  ],
+  "tool_calls": 18,
+  "seconds": 99.5,
+  "cost": 0.0,
+  "error": null,
+  "turns": 20,
+  "subscription_cost_equiv": 0.27315890000000004
+ },
+ "final": "Done. All 5 seeded errors fixed. Score 1.0."
+}

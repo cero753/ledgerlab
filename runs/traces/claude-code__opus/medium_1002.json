@@ -1,0 +1,32 @@
+{
+ "record": {
+  "model": "claude-code/opus",
+  "difficulty": "medium",
+  "seed": 1002,
+  "reward": 1.0,
+  "fixed_fraction": 1.0,
+  "solved": true,
+  "integrity": 1.0,
+  "bugs_fixed": [
+   "period_mislink",
+   "sign_flip",
+   "tax_on_ebitda"
+  ],
+  "bugs_missed": [],
+  "damaged_cells": [],
+  "benign_rewrites": 0,
+  "hardcoded_cells": [],
+  "bugs": [
+   "period_mislink",
+   "sign_flip",
+   "tax_on_ebitda"
+  ],
+  "tool_calls": 11,
+  "seconds": 10.5,
+  "cost": 0.0,
+  "error": null,
+  "turns": 13,
+  "subscription_cost_equiv": 0.14329840000000002
+ },
+ "final": "Found and fixed 3 errors in Corvane Robotics model (seed 1002, medium). Grader score 1.000: 3 of 3 errors fixed, integrity 1.00.\n\n- **`PnL!C6` (Year 1 EBITDA):** added opex instead of subtracting it. Now `=C4-C5`.\n- **`PnL!D9` (Year 2 tax):** taxed EBITDA instead of EBIT. Now `=D8*Inputs!$B$11`.\n- **`CashFlow!E3` (Year 3 D&A):** linked to Year 2 D&A. Now `=PnL!E7`.\n\nAll Inputs already matched Notes, so no assumptions changed. Equity value per share went from $9.18 to $8.66. Used 9 of 40 tool calls."
+}

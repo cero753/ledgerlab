@@ -1,0 +1,36 @@
+{
+ "record": {
+  "model": "claude-code/opus",
+  "difficulty": "hard",
+  "seed": 1003,
+  "reward": 1.0,
+  "fixed_fraction": 1.0,
+  "solved": true,
+  "integrity": 1.0,
+  "bugs_fixed": [
+   "nwc_level_not_change",
+   "growth_chain_break",
+   "period_mislink",
+   "range_omission",
+   "sign_flip"
+  ],
+  "bugs_missed": [],
+  "damaged_cells": [],
+  "benign_rewrites": 0,
+  "hardcoded_cells": [],
+  "bugs": [
+   "nwc_level_not_change",
+   "growth_chain_break",
+   "period_mislink",
+   "range_omission",
+   "sign_flip"
+  ],
+  "tool_calls": 13,
+  "seconds": 17.8,
+  "cost": 0.0,
+  "error": null,
+  "turns": 15,
+  "subscription_cost_equiv": 0.15935660000000001
+ },
+ "final": "Submitted. Score 1.000: all 5 errors fixed, integrity 1.00 (no edits to correct cells).\n\n| Cell | Bug | Fix |\n|---|---|---|\n| Revenue!E4 | SMB Year 3 grew from Year 1 (C4), not Year 2 | `=D4*(1+Inputs!$B$7)` |\n| Revenue!C5 | Year 1 total left out SMB (`C2:C3`) | `=SUM(C2:C4)` |\n| PnL!E2 | Year 3 revenue pulled Year 2 total | `=Revenue!E5` |\n| CashFlow!D7 | Capex added, not subtracted | `=D2+D3-D4-D6` |\n| CashFlow!F7 | Subtracted NWC balance (F5), not NWC increase (F6) | `=F2+F3-F4-F6` |\n\nInputs all matched Notes. DCF sheet had no errors. Equity value per share went from $0.9027 to $0.9498. Used 12 of 60 tool calls."
+}

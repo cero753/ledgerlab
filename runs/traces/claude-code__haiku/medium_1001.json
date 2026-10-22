@@ -1,0 +1,32 @@
+{
+ "record": {
+  "model": "claude-code/haiku",
+  "difficulty": "medium",
+  "seed": 1001,
+  "reward": 1.0,
+  "fixed_fraction": 1.0,
+  "solved": true,
+  "integrity": 1.0,
+  "bugs_fixed": [
+   "range_omission",
+   "hardcoded_plug",
+   "crosslink_wrong"
+  ],
+  "bugs_missed": [],
+  "damaged_cells": [],
+  "benign_rewrites": 0,
+  "hardcoded_cells": [],
+  "bugs": [
+   "range_omission",
+   "hardcoded_plug",
+   "crosslink_wrong"
+  ],
+  "tool_calls": 21,
+  "seconds": 129.0,
+  "cost": 0.0,
+  "error": null,
+  "turns": 23,
+  "subscription_cost_equiv": 0.16122
+ },
+ "final": "Perfect. All 3 seeded errors fixed (3/3). The integrity check passed at 1.00, confirming all corrections are formula-based (no hardcoded values) and properly propagate through the DCF model. Done."
+}

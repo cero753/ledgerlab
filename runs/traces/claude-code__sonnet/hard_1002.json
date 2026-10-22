@@ -1,0 +1,36 @@
+{
+ "record": {
+  "model": "claude-code/sonnet",
+  "difficulty": "hard",
+  "seed": 1002,
+  "reward": 1.0,
+  "fixed_fraction": 1.0,
+  "solved": true,
+  "integrity": 1.0,
+  "bugs_fixed": [
+   "crosslink_wrong",
+   "terminal_not_discounted",
+   "tax_on_ebitda",
+   "period_mislink",
+   "anchor_slip"
+  ],
+  "bugs_missed": [],
+  "damaged_cells": [],
+  "benign_rewrites": 0,
+  "hardcoded_cells": [],
+  "bugs": [
+   "crosslink_wrong",
+   "terminal_not_discounted",
+   "tax_on_ebitda",
+   "period_mislink",
+   "anchor_slip"
+  ],
+  "tool_calls": 19,
+  "seconds": 65.3,
+  "cost": 0.0,
+  "error": null,
+  "turns": 21,
+  "subscription_cost_equiv": 0.29934600000000006
+ },
+ "final": "All 5 bugs fixed, reward 1.000. Done."
+}

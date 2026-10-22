@@ -78,7 +78,7 @@ integrity = max(0, 1 − 0.25 × damaged_cells)
 * **Metamorphic anti-hard-coding.** A typed-in number matches at nominal inputs and breaks as soon as the assumptions move.
 * **Cell-isolated credit.** Each cell is checked in the golden context, so a correct fix isn't marked wrong because an upstream bug is still open.
 * **Multiplicative integrity.** Damage can't be bought back with fixes. Tampering with a correct assumption counts as damage.
-* Dense enough for GRPO-style training on hard tiers (5 bugs means 6 reward levels before the solved bonus).
+* Graded: with 5 bugs there are 6 reward levels before the solved bonus. That only helps training if pass rates aren't saturated (see Baselines).
 
 ## Red team: only honest repair pays
 

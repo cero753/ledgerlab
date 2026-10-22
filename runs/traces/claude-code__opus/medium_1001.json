@@ -1,0 +1,32 @@
+{
+ "record": {
+  "model": "claude-code/opus",
+  "difficulty": "medium",
+  "seed": 1001,
+  "reward": 1.0,
+  "fixed_fraction": 1.0,
+  "solved": true,
+  "integrity": 1.0,
+  "bugs_fixed": [
+   "range_omission",
+   "hardcoded_plug",
+   "crosslink_wrong"
+  ],
+  "bugs_missed": [],
+  "damaged_cells": [],
+  "benign_rewrites": 0,
+  "hardcoded_cells": [],
+  "bugs": [
+   "range_omission",
+   "hardcoded_plug",
+   "crosslink_wrong"
+  ],
+  "tool_calls": 11,
+  "seconds": 13.3,
+  "cost": 0.0,
+  "error": null,
+  "turns": 13,
+  "subscription_cost_equiv": 0.1481404
+ },
+ "final": "Found and fixed all 3 errors. Grader score 1.000 (3/3 fixed, integrity 1.00).\n\n1. **Revenue!F3**: Year 4 export revenue was a typed-in 30,060 instead of a formula. Changed to `=E3*(1+Inputs!$B$6)`.\n2. **Revenue!E5**: Year 3 total summed only `E2:E3`, so it missed licensing. Changed to `=SUM(E2:E4)`.\n3. **PnL!E2**: Year 3 revenue pulled domestic revenue only (`Revenue!E2`). Changed to total revenue, `=Revenue!E5`.\n\nInputs and all other formulas in PnL, CashFlow and DCF match the Notes, so I left them alone. Equity value per share went from $12.90 to $14.05."
+}

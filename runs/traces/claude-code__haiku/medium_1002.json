@@ -1,0 +1,32 @@
+{
+ "record": {
+  "model": "claude-code/haiku",
+  "difficulty": "medium",
+  "seed": 1002,
+  "reward": 1.0,
+  "fixed_fraction": 1.0,
+  "solved": true,
+  "integrity": 1.0,
+  "bugs_fixed": [
+   "period_mislink",
+   "sign_flip",
+   "tax_on_ebitda"
+  ],
+  "bugs_missed": [],
+  "damaged_cells": [],
+  "benign_rewrites": 0,
+  "hardcoded_cells": [],
+  "bugs": [
+   "period_mislink",
+   "sign_flip",
+   "tax_on_ebitda"
+  ],
+  "tool_calls": 24,
+  "seconds": 64.8,
+  "cost": 0.0,
+  "error": null,
+  "turns": 26,
+  "subscription_cost_equiv": 0.1110658
+ },
+ "final": "Done. All 3 seeded bugs fixed with perfect integrity. Model complete."
+}

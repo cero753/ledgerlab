@@ -1,0 +1,11 @@
+{
+ "record": {
+  "model": "claude-code/haiku",
+  "difficulty": "easy",
+  "seed": 1002,
+  "error": "no submit",
+  "turns": 29,
+  "subscription_cost_equiv": 0.127674
+ },
+ "final": "Tool budget exhausted\u2014episode auto-submitted. Fixed three main errors:\n\n1. **Revenue!E2** \u2014 replaced hard-coded 29,434.00 with formula =D2*(1+Inputs!$B$5) (violated spec: no hard-coded numbers except DCF row 2)\n\n2. **PnL base year (B3:B10)** \u2014 added all missing formulas:\n   - B3 (COGS): =B2*(1-Inputs!$B$8)\n   - B4 (Gross Profit): =B2-B3\n   - B5 (Opex): =B2*Inputs!$B$9\n   - B6 (EBITDA): =B4-B5\n   - B7 (D&A): =B2*Inputs!$B$10\n   - B8 (EBIT): =B6-B7\n   - B9 (Tax): =B8*Inputs!$B$11\n   - B10 (NOPAT): =B8-B9\n\n3. **CashFlow base year (B2, B3, B4, B6, B7)** \u2014 added all missing formulas to link to PnL and calculate base year FCF\n\nAll formulas now match the spec. Model is complete and consistent."
+}

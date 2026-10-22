@@ -1,0 +1,36 @@
+{
+ "record": {
+  "model": "claude-code/opus",
+  "difficulty": "hard",
+  "seed": 1001,
+  "reward": 1.0,
+  "fixed_fraction": 1.0,
+  "solved": true,
+  "integrity": 1.0,
+  "bugs_fixed": [
+   "anchor_slip",
+   "terminal_wrong_year",
+   "unit_mismatch",
+   "crosslink_wrong",
+   "discount_off_by_one"
+  ],
+  "bugs_missed": [],
+  "damaged_cells": [],
+  "benign_rewrites": 0,
+  "hardcoded_cells": [],
+  "bugs": [
+   "anchor_slip",
+   "terminal_wrong_year",
+   "unit_mismatch",
+   "crosslink_wrong",
+   "discount_off_by_one"
+  ],
+  "tool_calls": 20,
+  "seconds": 41.7,
+  "cost": 0.0,
+  "error": null,
+  "turns": 22,
+  "subscription_cost_equiv": 0.3231168
+ },
+ "final": "Found and fixed all 5 errors. Grader gave reward 1.000, integrity 1.00, no penalty for collateral edits. All fixes are formulas or Notes values, no hard-coded numbers.\n\n1. **`Inputs!B8`:** gross margin was entered as 39. Changed to 0.39.\n2. **`PnL!E2`:** pointed at `Revenue!E4` (SMB segment only). Now `Revenue!E5` (total revenue).\n3. **`CashFlow!D5:G5`:** NWC % reference not anchored, so it drifted right to empty cells. Now `Inputs!$B$13`.\n4. **`DCF!C3:G3`:** discount exponent was `period-1`, one period too few. Now `period`, per end-of-year discounting.\n5. **`DCF!B7`:** terminal value used Year-4 FCF (`F7`). Now Year-5 FCF (`G7`).\n\nValue per share went from $378.56 to $1.88. Checked by hand: terminal value comes out about 97.35k, matching `DCF!B7` at 97,361."
+}

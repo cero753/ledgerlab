@@ -1,0 +1,36 @@
+{
+ "record": {
+  "model": "claude-code/haiku",
+  "difficulty": "hard",
+  "seed": 1001,
+  "reward": 1.0,
+  "fixed_fraction": 1.0,
+  "solved": true,
+  "integrity": 1.0,
+  "bugs_fixed": [
+   "anchor_slip",
+   "terminal_wrong_year",
+   "unit_mismatch",
+   "crosslink_wrong",
+   "discount_off_by_one"
+  ],
+  "bugs_missed": [],
+  "damaged_cells": [],
+  "benign_rewrites": 0,
+  "hardcoded_cells": [],
+  "bugs": [
+   "anchor_slip",
+   "terminal_wrong_year",
+   "unit_mismatch",
+   "crosslink_wrong",
+   "discount_off_by_one"
+  ],
+  "tool_calls": 21,
+  "seconds": 147.0,
+  "cost": 0.0,
+  "error": null,
+  "turns": 23,
+  "subscription_cost_equiv": 0.3739849
+ },
+ "final": "Done. 5/5 bugs fixed. Integrity 100%."
+}

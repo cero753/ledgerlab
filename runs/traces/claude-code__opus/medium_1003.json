@@ -1,0 +1,32 @@
+{
+ "record": {
+  "model": "claude-code/opus",
+  "difficulty": "medium",
+  "seed": 1003,
+  "reward": 1.0,
+  "fixed_fraction": 1.0,
+  "solved": true,
+  "integrity": 1.0,
+  "bugs_fixed": [
+   "tax_on_ebitda",
+   "hardcoded_plug",
+   "range_omission"
+  ],
+  "bugs_missed": [],
+  "damaged_cells": [],
+  "benign_rewrites": 0,
+  "hardcoded_cells": [],
+  "bugs": [
+   "tax_on_ebitda",
+   "hardcoded_plug",
+   "range_omission"
+  ],
+  "tool_calls": 11,
+  "seconds": 12.3,
+  "cost": 0.0,
+  "error": null,
+  "turns": 13,
+  "subscription_cost_equiv": 0.14547659999999998
+ },
+ "final": "Found and fixed all 3 errors. Grader scored 1.000: 3/3 fixed, integrity 1.00.\n\n| Cell | Bug | Fix |\n|---|---|---|\n| Revenue!D2 | Formula replaced by typed-in number 38,640 | `=C2*(1+Inputs!$B$5)` |\n| Revenue!D5 | `SUM(D2:D3)` left out Online segment | `=SUM(D2:D4)` |\n| PnL!C9 | Tax taken on EBITDA, not EBIT | `=C8*Inputs!$B$11` |\n\nEquity value per share moved from $6.11 to $6.02. Inputs match Notes; CashFlow and DCF follow spec. Used 11 of 40 tool calls."
+}

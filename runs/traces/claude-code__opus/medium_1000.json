@@ -1,0 +1,32 @@
+{
+ "record": {
+  "model": "claude-code/opus",
+  "difficulty": "medium",
+  "seed": 1000,
+  "reward": 1.0,
+  "fixed_fraction": 1.0,
+  "solved": true,
+  "integrity": 1.0,
+  "bugs_fixed": [
+   "tax_on_ebitda",
+   "range_omission",
+   "growth_chain_break"
+  ],
+  "bugs_missed": [],
+  "damaged_cells": [],
+  "benign_rewrites": 0,
+  "hardcoded_cells": [],
+  "bugs": [
+   "tax_on_ebitda",
+   "range_omission",
+   "growth_chain_break"
+  ],
+  "tool_calls": 11,
+  "seconds": 15.4,
+  "cost": 0.0,
+  "error": null,
+  "turns": 13,
+  "subscription_cost_equiv": 0.1600462
+ },
+ "final": "Submitted. Score 1.000: all 3 errors fixed, no unneeded edits.\n\n| Cell | Error | Fix |\n|---|---|---|\n| `Revenue!F4` | Online Year 4 grew from Year 2 (`D4`), not Year 3 | `=E4*(1+Inputs!$B$7)` |\n| `Revenue!D5` | Year 2 total `SUM(D2:D3)` left out Online | `=SUM(D2:D4)` |\n| `PnL!E9` | Year 3 tax charged on EBITDA (`E6`), not EBIT | `=E8*Inputs!$B$11` |\n\nAll Inputs values already matched Notes, so none changed. Value per share went from $4.92 to $5.11.\n\nUsed 10 of 40 tool calls. Skipped advisor: errors were clear from one read of every sheet, and grader confirmed result."
+}

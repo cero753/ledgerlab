@@ -1,0 +1,36 @@
+{
+ "record": {
+  "model": "claude-code/opus",
+  "difficulty": "hard",
+  "seed": 1002,
+  "reward": 1.0,
+  "fixed_fraction": 1.0,
+  "solved": true,
+  "integrity": 1.0,
+  "bugs_fixed": [
+   "crosslink_wrong",
+   "terminal_not_discounted",
+   "tax_on_ebitda",
+   "period_mislink",
+   "anchor_slip"
+  ],
+  "bugs_missed": [],
+  "damaged_cells": [],
+  "benign_rewrites": 0,
+  "hardcoded_cells": [],
+  "bugs": [
+   "crosslink_wrong",
+   "terminal_not_discounted",
+   "tax_on_ebitda",
+   "period_mislink",
+   "anchor_slip"
+  ],
+  "tool_calls": 16,
+  "seconds": 16.4,
+  "cost": 0.0,
+  "error": null,
+  "turns": 18,
+  "subscription_cost_equiv": 0.1718042
+ },
+ "final": "Task submitted. Score 1.000: all 5 errors fixed, integrity 1.00 (no unneeded edits).\n\n| Cell | Error | Fix |\n|---|---|---|\n| Revenue D2:G2 | Growth ref not anchored, drifted to blank cells, so Enterprise flat after Year 1 | `=C2*(1+Inputs!$B$5)` etc. |\n| PnL D2 | Linked to prior year (`Revenue!C5`) | `=Revenue!D5` |\n| PnL F2 | Linked to Enterprise only, not total (`Revenue!F2`) | `=Revenue!F5` |\n| PnL F9 | Tax on EBITDA (`F6`) | `=F8*Inputs!$B$11` |\n| DCF B8 | Terminal value not discounted | `=B7*G3` |\n\nAll Inputs matched Notes. CashFlow sheet and remaining DCF lines already correct, left unchanged.\n\nEquity value per share went from $6.96 to $5.89. Most of drop from discounting terminal value; revenue fixes pushed value up."
+}

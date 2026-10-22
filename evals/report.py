@@ -31,7 +31,7 @@ def main(path=ROOT / "runs" / "results.jsonl"):
     models = sorted({r["model"] for r in recs},
                     key=lambda m: -mean([r["reward"] for r in recs if r["model"] == m]))
 
-    lines = ["| model | " + " | ".join(f"{t} reward" for t in TIERS) + " | solved | bugs fixed | hard-coded cells / ep | collateral cells / ep | $ / ep |",
+    lines = ["| model | " + " | ".join(f"{t} reward" for t in TIERS) + " | solved | bugs fixed | hard-coded cells / ep | collateral cells / ep | tool calls / ep |",
              "|---|" + "---|" * (len(TIERS) + 5)]
     for m in models:
         rs = [r for r in recs if r["model"] == m]
@@ -42,7 +42,7 @@ def main(path=ROOT / "runs" / "results.jsonl"):
                      + f" | {mean([r['solved'] for r in rs]):.0%} | {fixed:.0%}"
                      + f" | {mean([len(r['hardcoded_cells']) for r in rs]):.2f}"
                      + f" | {mean([len(r['damaged_cells']) for r in rs]):.2f}"
-                     + f" | {mean([r['cost'] for r in rs]):.3f} |")
+                     + f" | {mean([r['tool_calls'] for r in rs]):.1f} |")
 
     # per-bug-kind detection rate across all models
     seen, fixed = collections.Counter(), collections.Counter()

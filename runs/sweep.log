@@ -1,1 +1,29 @@
 44 episodes
+claude-code/haiku      easy   seed=1001 reward=1.00 fixed=['hardcoded_plug'] missed=[] calls=22
+claude-code/haiku      easy   seed=1003 reward=1.00 fixed=['hardcoded_plug'] missed=[] calls=25
+claude-code/haiku      easy   seed=1000 reward=1.00 fixed=['range_omission'] missed=[] calls=9
+claude-code/haiku      easy   seed=1002 ERROR no submit
+23 episodes
+claude-code/haiku      medium seed=1000 reward=1.00 fixed=['tax_on_ebitda', 'range_omission', 'growth_chain_break'] missed=[] calls=12
+claude-code/haiku      medium seed=1001 reward=1.00 fixed=['range_omission', 'hardcoded_plug', 'crosslink_wrong'] missed=[] calls=21
+claude-code/haiku      medium seed=1002 reward=1.00 fixed=['period_mislink', 'sign_flip', 'tax_on_ebitda'] missed=[] calls=24
+claude-code/haiku      medium seed=1003 reward=1.00 fixed=['tax_on_ebitda', 'hardcoded_plug', 'range_omission'] missed=[] calls=40
+claude-code/haiku      hard   seed=1000 reward=1.00 fixed=['tax_on_ebitda', 'period_mislink', 'growth_chain_break', 'nwc_level_not_change', 'sign_flip'] missed=[] calls=13
+claude-code/haiku      hard   seed=1001 reward=1.00 fixed=['anchor_slip', 'terminal_wrong_year', 'unit_mismatch', 'crosslink_wrong', 'discount_off_by_one'] missed=[] calls=21
+claude-code/haiku      hard   seed=1002 reward=1.00 fixed=['crosslink_wrong', 'terminal_not_discounted', 'tax_on_ebitda', 'period_mislink', 'anchor_slip'] missed=[] calls=18
+claude-code/haiku      hard   seed=1003 reward=1.00 fixed=['nwc_level_not_change', 'growth_chain_break', 'period_mislink', 'range_omission', 'sign_flip'] missed=[] calls=43
+claude-code/sonnet     medium seed=1001 reward=1.00 fixed=['range_omission', 'hardcoded_plug', 'crosslink_wrong'] missed=[] calls=13
+claude-code/sonnet     medium seed=1002 reward=1.00 fixed=['period_mislink', 'sign_flip', 'tax_on_ebitda'] missed=[] calls=13
+claude-code/sonnet     medium seed=1003 reward=1.00 fixed=['tax_on_ebitda', 'hardcoded_plug', 'range_omission'] missed=[] calls=11
+claude-code/sonnet     hard   seed=1000 reward=1.00 fixed=['tax_on_ebitda', 'period_mislink', 'growth_chain_break', 'nwc_level_not_change', 'sign_flip'] missed=[] calls=13
+claude-code/sonnet     hard   seed=1001 reward=1.00 fixed=['anchor_slip', 'terminal_wrong_year', 'unit_mismatch', 'crosslink_wrong', 'discount_off_by_one'] missed=[] calls=20
+claude-code/sonnet     hard   seed=1002 reward=1.00 fixed=['crosslink_wrong', 'terminal_not_discounted', 'tax_on_ebitda', 'period_mislink', 'anchor_slip'] missed=[] calls=19
+claude-code/sonnet     hard   seed=1003 reward=1.00 fixed=['nwc_level_not_change', 'growth_chain_break', 'period_mislink', 'range_omission', 'sign_flip'] missed=[] calls=13
+claude-code/opus       medium seed=1000 reward=1.00 fixed=['tax_on_ebitda', 'range_omission', 'growth_chain_break'] missed=[] calls=11
+claude-code/opus       medium seed=1001 reward=1.00 fixed=['range_omission', 'hardcoded_plug', 'crosslink_wrong'] missed=[] calls=11
+claude-code/opus       medium seed=1002 reward=1.00 fixed=['period_mislink', 'sign_flip', 'tax_on_ebitda'] missed=[] calls=11
+claude-code/opus       medium seed=1003 reward=1.00 fixed=['tax_on_ebitda', 'hardcoded_plug', 'range_omission'] missed=[] calls=11
+claude-code/opus       hard   seed=1000 reward=1.00 fixed=['tax_on_ebitda', 'period_mislink', 'growth_chain_break', 'nwc_level_not_change', 'sign_flip'] missed=[] calls=13
+claude-code/opus       hard   seed=1001 reward=1.00 fixed=['anchor_slip', 'terminal_wrong_year', 'unit_mismatch', 'crosslink_wrong', 'discount_off_by_one'] missed=[] calls=20
+claude-code/opus       hard   seed=1002 reward=1.00 fixed=['crosslink_wrong', 'terminal_not_discounted', 'tax_on_ebitda', 'period_mislink', 'anchor_slip'] missed=[] calls=16
+claude-code/opus       hard   seed=1003 reward=1.00 fixed=['nwc_level_not_change', 'growth_chain_break', 'period_mislink', 'range_omission', 'sign_flip'] missed=[] calls=13

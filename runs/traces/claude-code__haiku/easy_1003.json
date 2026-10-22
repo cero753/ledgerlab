@@ -1,0 +1,28 @@
+{
+ "record": {
+  "model": "claude-code/haiku",
+  "difficulty": "easy",
+  "seed": 1003,
+  "reward": 1.0,
+  "fixed_fraction": 1.0,
+  "solved": true,
+  "integrity": 1.0,
+  "bugs_fixed": [
+   "hardcoded_plug"
+  ],
+  "bugs_missed": [],
+  "damaged_cells": [],
+  "benign_rewrites": 0,
+  "hardcoded_cells": [],
+  "bugs": [
+   "hardcoded_plug"
+  ],
+  "tool_calls": 25,
+  "seconds": 68.8,
+  "cost": 0.0,
+  "error": null,
+  "turns": 28,
+  "subscription_cost_equiv": 0.10968800000000002
+ },
+ "final": "Perfect score achieved! Fixed the seeded error: PnL!G3 had hard-coded 35,147.00 instead of formula =G2*(1-Inputs!$B$8). The other formula additions I made (base year calcs in PnL and CashFlow) were consistent with the spec but not strictly required. Final integrity: 1.00, task solved."
+}

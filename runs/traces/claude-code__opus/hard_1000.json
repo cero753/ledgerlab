@@ -1,0 +1,36 @@
+{
+ "record": {
+  "model": "claude-code/opus",
+  "difficulty": "hard",
+  "seed": 1000,
+  "reward": 1.0,
+  "fixed_fraction": 1.0,
+  "solved": true,
+  "integrity": 1.0,
+  "bugs_fixed": [
+   "tax_on_ebitda",
+   "period_mislink",
+   "growth_chain_break",
+   "nwc_level_not_change",
+   "sign_flip"
+  ],
+  "bugs_missed": [],
+  "damaged_cells": [],
+  "benign_rewrites": 0,
+  "hardcoded_cells": [],
+  "bugs": [
+   "tax_on_ebitda",
+   "period_mislink",
+   "growth_chain_break",
+   "nwc_level_not_change",
+   "sign_flip"
+  ],
+  "tool_calls": 13,
+  "seconds": 13.9,
+  "cost": 0.0,
+  "error": null,
+  "turns": 15,
+  "subscription_cost_equiv": 0.15844919999999998
+ },
+ "final": "Found and fixed all 5 errors. Grader gave reward 1.000 (5/5 fixed, integrity 1.00). All fixes are formulas, no typed-in numbers.\n\n| Cell | Was | Fix |\n|---|---|---|\n| Revenue!G3 | Grew from E3 (two years back) | `=F3*(1+Inputs!$B$6)` |\n| PnL!E4 | Added COGS to revenue (`E2+E3`) | `=E2-E3` |\n| PnL!F9 | Taxed EBITDA | `=F8*Inputs!$B$11` |\n| CashFlow!G2 | Pulled Year-4 NOPAT | `=PnL!G10` |\n| CashFlow!F7 | Subtracted NWC balance, not increase | `=F2+F3-F4-F6` |\n\nInputs all matched Notes, so none touched. Equity value per share now $3.61 (was $3.49)."
+}
