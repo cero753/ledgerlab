@@ -1,0 +1,22 @@
+[project]
+name = "ledgerlab"
+version = "0.1.0"
+description = "An RL environment for financial-model repair agents: procedurally generated multi-sheet models, seeded analyst errors, and reward-hacking-resistant verifiers."
+readme = "README.md"
+license = "MIT"
+authors = [{ name = "Kartik Bhardwaj", email = "kartikbhardwaj753@gmail.com" }]
+requires-python = ">=3.12"
+dependencies = ["openpyxl>=3.1"]
+
+[project.optional-dependencies]
+evals = ["openai>=1.40", "matplotlib>=3.8"]
+
+[dependency-groups]
+dev = ["pytest>=8"]
+
+[project.scripts]
+ledgerlab = "ledgerlab.cli:main"
+
+[build-system]
+requires = ["uv_build>=0.12.9,<0.13.0"]
+build-backend = "uv_build"
