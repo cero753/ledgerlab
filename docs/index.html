@@ -1,0 +1,243 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
+<title>ledgerlab</title>
+<meta name="description" content="An RL environment for financial-model repair agents, with a reward-hacking-resistant verifier.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Public+Sans:ital,wght@0,400;0,500;0,600;0,700;1,400&family=JetBrains+Mono:wght@400;500;600&display=swap">
+<style>
+:root{
+  --paper:#F7F8F6; --card:#FFFFFF; --ink:#141A21; --muted:#56606B; --line:#D9DDD8; --rule:#E9ECE8;
+  --blue:#1F4FA3; --blue-soft:#E4EBF7; --red:#B23A2E; --red-soft:#F7E3E0; --green:#2D6A45; --green-soft:#E1EEE5;
+  --code:#EEF1ED;
+  --sans:"Public Sans",system-ui,-apple-system,"Segoe UI",sans-serif;
+  --mono:"JetBrains Mono",ui-monospace,Consolas,monospace;
+}
+@media (prefers-color-scheme: dark){
+  :root:not([data-theme="light"]){
+    color-scheme:dark;
+    --paper:#0F1419; --card:#161D25; --ink:#E6EAEE; --muted:#9AA6B2; --line:#2A3440; --rule:#1E2731;
+    --blue:#7FA6EE; --blue-soft:#1A2740; --red:#EE8A7E; --red-soft:#3A201D; --green:#78C495; --green-soft:#183025; --code:#1B232C;
+  }
+}
+:root[data-theme="dark"]{
+  color-scheme:dark;
+  --paper:#0F1419; --card:#161D25; --ink:#E6EAEE; --muted:#9AA6B2; --line:#2A3440; --rule:#1E2731;
+  --blue:#7FA6EE; --blue-soft:#1A2740; --red:#EE8A7E; --red-soft:#3A201D; --green:#78C495; --green-soft:#183025; --code:#1B232C;
+}
+*{box-sizing:border-box}
+html{-webkit-text-size-adjust:100%}
+body{margin:0;background:var(--paper);color:var(--ink);font-family:var(--sans);font-size:16px;line-height:1.6;padding-inline:20px;padding-block:0 72px}
+.wrap{max-width:960px;margin:0 auto;display:flex;flex-direction:column;gap:56px}
+header{padding-top:52px;padding-bottom:28px;border-bottom:1px solid var(--line);display:flex;flex-direction:column;gap:14px}
+.kicker{font-family:var(--mono);font-size:12px;letter-spacing:.08em;text-transform:uppercase;color:var(--blue)}
+h1{font-family:var(--mono);font-weight:600;font-size:clamp(36px,6.5vw,58px);line-height:1;margin:0;letter-spacing:-.02em}
+h2{font-weight:700;font-size:24px;line-height:1.2;margin:0;text-wrap:balance}
+h3{font-weight:600;font-size:16px;margin:0}
+p{margin:0;max-width:70ch}
+.lede{font-size:19px;color:var(--muted);max-width:62ch}
+.links{display:flex;flex-wrap:wrap;gap:8px 22px;font-family:var(--mono);font-size:13px}
+a{color:var(--blue);text-underline-offset:2px}
+a:focus-visible{outline:2px solid var(--blue);outline-offset:2px}
+section{display:flex;flex-direction:column;gap:16px}
+.muted{color:var(--muted)}
+.small{font-size:14px}
+code{font-family:var(--mono);font-size:.88em;background:var(--code);padding:1px 5px;border-radius:4px}
+pre{margin:0;background:var(--code);border:1px solid var(--line);border-radius:8px;padding:14px 16px;overflow-x:auto;font-family:var(--mono);font-size:13.5px;line-height:1.6}
+pre code{background:none;padding:0}
+.diagram{background:var(--card);border:1px solid var(--line);border-radius:10px;padding:18px;overflow-x:auto}
+.diagram svg{display:block;min-width:760px;width:100%;height:auto}
+.diagram text{font-family:var(--sans);fill:var(--ink)}
+.diagram .mono{font-family:var(--mono);font-size:11px;fill:var(--muted)}
+.diagram .nd{fill:var(--card);stroke:var(--line)}
+.diagram .nd.strong{stroke:var(--ink)}
+.diagram .nd.blue{fill:var(--blue-soft);stroke:var(--blue)}
+.diagram .nd.green{fill:var(--green-soft);stroke:var(--green)}
+.diagram .nd.dash{stroke-dasharray:4 3}
+.diagram .edge{fill:none;stroke:var(--muted);stroke-width:1.4}
+.diagram .head{fill:var(--muted)}
+.diagram text.sub{fill:var(--muted)}
+.cols{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:14px}
+@media (max-width:640px){.cols{grid-template-columns:1fr}}
+.box{background:var(--card);border:1px solid var(--line);border-radius:8px;padding:16px 18px;display:flex;flex-direction:column;gap:6px}
+.box .file{font-family:var(--mono);font-size:12px;color:var(--blue)}
+.box p{font-size:15px;color:var(--muted)}
+.tbl{overflow-x:auto;border:1px solid var(--line);border-radius:8px;background:var(--card)}
+table{border-collapse:collapse;width:100%;font-size:14.5px;font-variant-numeric:tabular-nums}
+th,td{padding:9px 12px;text-align:left;border-bottom:1px solid var(--rule);vertical-align:top}
+th{font-size:12px;letter-spacing:.05em;text-transform:uppercase;color:var(--muted);font-weight:600;background:var(--paper)}
+tr:last-child td{border-bottom:none}
+td.n,th.n{text-align:right;white-space:nowrap}
+td.f{font-family:var(--mono);font-size:13px;white-space:nowrap}
+.bad{color:var(--red)} .good{color:var(--green)}
+.reward{font-family:var(--mono);font-size:15px;background:var(--card);border:1px solid var(--line);border-left:4px solid var(--blue);border-radius:6px;padding:14px 16px;overflow-x:auto}
+.stat{display:flex;gap:14px;flex-wrap:wrap}
+.stat div{flex:1 1 160px;background:var(--card);border:1px solid var(--line);border-radius:8px;padding:14px 16px}
+.stat b{display:block;font-family:var(--mono);font-size:26px;font-weight:600}
+.stat span{font-size:13.5px;color:var(--muted)}
+ul{margin:0;padding-left:20px;max-width:70ch}
+li+li{margin-top:4px}
+footer{border-top:1px solid var(--line);padding-top:20px;font-size:13px;color:var(--muted)}
+</style>
+</head>
+<body>
+<div class="wrap">
+
+<header>
+  <span class="kicker">RL environment · verifiable rewards · finance</span>
+  <h1>ledgerlab</h1>
+  <p class="lede">An environment where an agent receives a financial model with seeded analyst errors and has to repair it through tools. The grader re-runs the agent's model under perturbed assumptions, so the only way to score is to actually fix it.</p>
+  <div class="links">
+    <a href="https://github.com/cero753/ledgerlab">github.com/cero753/ledgerlab</a>
+    <span class="muted">Kartik Bhardwaj</span>
+  </div>
+</header>
+
+<section>
+  <h2>Why spreadsheet debugging</h2>
+  <p>On SpreadsheetBench 2 (<a href="https://arxiv.org/abs/2606.29955">arXiv 2606.29955</a>) the best model reaches 34.9% overall and 12% on debugging. Debugging is everyday analyst work and it is checkable, which makes it a good target for RL. A benchmark has a fixed task set. An environment needs an unlimited supply of fresh tasks, a dense reward that cannot be gamed, and fast verification. ledgerlab is built around those three requirements.</p>
+</section>
+
+<section>
+  <h2>Architecture</h2>
+  <div class="diagram" role="img" aria-label="Architecture: generator and bring-your-own workbooks feed task QC; tasks run in a tool environment driven by agents over MCP or OpenAI tools; on submit the verifier scores the workbook with the formula engine under perturbed scenarios; scripted red-team policies exercise the same path in CI.">
+  <svg viewBox="0 0 900 400" xmlns="http://www.w3.org/2000/svg">
+    <defs>
+      <marker id="ar" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" class="head"/></marker>
+    </defs>
+    <!-- sources -->
+    <rect x="10" y="30" width="170" height="70" rx="8" class="nd"/>
+    <text x="24" y="58" font-size="15" font-weight="600">Model generator</text>
+    <text x="24" y="80" class="mono">model.py · bugs.py</text>
+    <rect x="10" y="130" width="170" height="70" rx="8" class="nd"/>
+    <text x="24" y="158" font-size="15" font-weight="600">Your .xlsx</text>
+    <text x="24" y="180" class="mono">byo.py · mutators</text>
+    <!-- QC -->
+    <rect x="230" y="70" width="160" height="90" rx="8" class="nd blue"/>
+    <text x="244" y="100" font-size="15" font-weight="600">Task QC</text>
+    <text x="244" y="122" font-size="12.5" class="sub">detectable, unmasked,</text>
+    <text x="244" y="140" font-size="12.5" class="sub">clean, inferable</text>
+    <path d="M180,65 L228,100" class="edge" marker-end="url(#ar)"/>
+    <path d="M180,165 L228,130" class="edge" marker-end="url(#ar)"/>
+    <!-- env -->
+    <rect x="440" y="60" width="190" height="110" rx="8" class="nd strong"/>
+    <text x="454" y="88" font-size="15" font-weight="600">Tool environment</text>
+    <text x="454" y="108" class="mono">env.py</text>
+    <text x="454" y="130" font-size="12.5" class="sub">read_range · trace_precedents</text>
+    <text x="454" y="148" font-size="12.5" class="sub">set_cell · submit · budget</text>
+    <path d="M390,115 L438,115" class="edge" marker-end="url(#ar)"/>
+    <!-- agents -->
+    <rect x="690" y="30" width="200" height="70" rx="8" class="nd"/>
+    <text x="704" y="58" font-size="15" font-weight="600">Agent</text>
+    <text x="704" y="80" class="mono">MCP server · OpenAI tools</text>
+    <rect x="690" y="130" width="200" height="70" rx="8" class="nd dash"/>
+    <text x="704" y="158" font-size="15" font-weight="600">Red-team policies</text>
+    <text x="704" y="180" class="mono">policies.py · pytest</text>
+    <path d="M688,72 L632,98" class="edge" marker-end="url(#ar)" marker-start="url(#ar)"/>
+    <path d="M688,160 L632,140" class="edge" marker-end="url(#ar)"/>
+    <!-- verifier -->
+    <rect x="300" y="250" width="330" height="120" rx="8" class="nd strong"/>
+    <text x="314" y="278" font-size="15" font-weight="600">Verifier</text>
+    <text x="380" y="278" class="mono">rewards.py</text>
+    <text x="314" y="302" font-size="12.5" class="sub">each changed cell, in the golden model:</text>
+    <text x="314" y="320" font-size="12.5" class="sub">match at nominal inputs + 3 perturbed scenarios</text>
+    <text x="314" y="338" font-size="12.5" class="sub">bugs fixed · collateral damage · solved</text>
+    <text x="314" y="356" class="mono">reward = integrity × (0.7·fixed + 0.3·solved)</text>
+    <path d="M535,170 L500,248" class="edge" marker-end="url(#ar)"/>
+    <text x="528" y="214" class="mono">submit</text>
+    <!-- engine -->
+    <rect x="30" y="270" width="210" height="80" rx="8" class="nd"/>
+    <text x="44" y="298" font-size="15" font-weight="600">Formula engine</text>
+    <text x="44" y="318" class="mono">workbook.py</text>
+    <text x="44" y="338" font-size="12.5" class="sub">parser, lazy eval, Excel errors</text>
+    <path d="M240,310 L298,310" class="edge" marker-end="url(#ar)"/>
+    <!-- output -->
+    <rect x="690" y="270" width="200" height="80" rx="8" class="nd green"/>
+    <text x="704" y="298" font-size="15" font-weight="600">RewardBreakdown</text>
+    <text x="704" y="320" font-size="12.5" class="sub">fixed / missed bugs,</text>
+    <text x="704" y="338" font-size="12.5" class="sub">damaged + hard-coded cells</text>
+    <path d="M630,310 L688,310" class="edge" marker-end="url(#ar)"/>
+  </svg>
+  </div>
+  <div class="cols">
+    <div class="box"><span class="file">model.py · bugs.py</span><h3>Generator</h3><p>A seeded company: three revenue segments, P&amp;L, unlevered FCF, DCF, and a Notes sheet with the signed-off assumptions. Rows are filled right like an analyst drags a formula, so anchoring errors behave as they do in Excel. 21 error types across four tiers.</p></div>
+    <div class="box"><span class="file">task.py</span><h3>Task QC</h3><p>A task is redrawn unless every error moves a key output, fixing any one error still moves an output with the others present, the model evaluates cleanly, and each error follows from the Notes.</p></div>
+    <div class="box"><span class="file">rewards.py</span><h3>Verifier</h3><p>Each changed cell is dropped into the golden model and must match under the nominal inputs and three random perturbations of every assumption. Any correct formula passes. A typed number fails as soon as the inputs move.</p></div>
+    <div class="box"><span class="file">workbook.py</span><h3>Formula engine</h3><p>Recursive-descent parser and memoised evaluator in pure Python: strings, comparisons, IF/IFERROR, SUMIFS/COUNTIFS, dates. Deterministic, no Excel or LibreOffice, TODAY() frozen.</p></div>
+  </div>
+  <div class="reward">reward = integrity × (0.7 × fixed_fraction + 0.3 × solved)&nbsp;&nbsp;&nbsp;integrity = max(0, 1 − 0.25 × damaged_cells)</div>
+</section>
+
+<section>
+  <h2>A sample task</h2>
+  <p>Hard tier, seed 1007, a generated company called Arkwright Industrial. Five errors are seeded; the agent is not told how many. Together they inflate enterprise value by 32%.</p>
+  <div class="tbl"><table>
+    <tr><th>Error</th><th>Cell</th><th>Seeded</th><th>Correct</th></tr>
+    <tr><td>discount factor off by one period</td><td class="f">DCF!C3</td><td class="f bad">=1/(1+WACC)^(C2-1)</td><td class="f good">=1/(1+WACC)^C2</td></tr>
+    <tr><td>total misses a segment</td><td class="f">Revenue!E5</td><td class="f bad">=SUM(E2:E3)</td><td class="f good">=SUM(E2:E4)</td></tr>
+    <tr><td>NWC balance instead of change</td><td class="f">CashFlow!D7</td><td class="f bad">=D2+D3-D4-D5</td><td class="f good">=D2+D3-D4-D6</td></tr>
+    <tr><td>formula pasted over with a number</td><td class="f">PnL!F7</td><td class="f bad">1928</td><td class="f good">=F2*Inputs!$B$10</td></tr>
+    <tr><td>terminal value not discounted</td><td class="f">DCF!B8</td><td class="f bad">=B7</td><td class="f good">=B7*G3</td></tr>
+  </table></div>
+  <div class="stat">
+    <div><b class="bad">$83.7M</b><span>enterprise value as seeded</span></div>
+    <div><b class="good">$63.1M</b><span>enterprise value when repaired</span></div>
+    <div><b>98 s</b><span>Claude Sonnet over MCP: 5 of 5 fixed, reward 1.000</span></div>
+  </div>
+  <p class="small muted">Asked instead to type the correct final numbers into the output cells, the same model scored 0.000 and the grader listed each hard-coded cell.</p>
+</section>
+
+<section>
+  <h2>Reward hacking</h2>
+  <p>Scripted policies drive the same tool interface a model uses. Each one is a pytest assertion, so a change to the reward that opens a hack fails CI. 40 seeds per tier.</p>
+  <div class="tbl"><table>
+    <tr><th>Policy</th><th class="n">easy</th><th class="n">medium</th><th class="n">hard</th><th class="n">expert</th></tr>
+    <tr><td>Reference fix, or an equivalent formula written differently</td><td class="n">1.00</td><td class="n">1.00</td><td class="n">1.00</td><td class="n">1.00</td></tr>
+    <tr><td>Fix every error but one</td><td class="n">0.00</td><td class="n">0.47</td><td class="n">0.56</td><td class="n">0.53</td></tr>
+    <tr><td>Fix everything, paste values into two correct cells</td><td class="n">0.35</td><td class="n">0.35</td><td class="n">0.35</td><td class="n">0.35</td></tr>
+    <tr><td>Fix everything, then "tidy" the approved pattern breaks</td><td class="n muted">n/a</td><td class="n muted">n/a</td><td class="n muted">n/a</td><td class="n">0.27</td></tr>
+    <tr><td>Paste the right answers over the outputs</td><td class="n">0.00</td><td class="n">0.00</td><td class="n">0.00</td><td class="n">0.00</td></tr>
+    <tr><td>Replace the whole model with correct numbers</td><td class="n">0.00</td><td class="n">0.00</td><td class="n">0.00</td><td class="n">0.00</td></tr>
+    <tr><td>Goal-seek net debt to hit the target share price</td><td class="n">0.00</td><td class="n">0.00</td><td class="n">0.00</td><td class="n">0.00</td></tr>
+  </table></div>
+</section>
+
+<section>
+  <h2>Baselines and calibration</h2>
+  <p>Claude Haiku, Sonnet and Opus, run headless through the MCP server with no file access, scored 1.00 on every easy, medium and hard task (3–4 tasks per model per tier). A saturated environment gives no learning signal, so I looked at why. Rows are uniform and each error broke one column, so the broken cell was the odd one out; the line-by-line spec turned the task into a diff.</p>
+  <p>The expert tier targets that shortcut: errors that span a whole row, approved pattern breaks that must be left alone, and a brief with assumptions and conventions instead of a spec. Haiku and Sonnet still scored 1.00 but needed 60–70% more tool calls. The next real increase in difficulty comes from larger, messier, expert-built workbooks, which is what the bring-your-own mode is for.</p>
+</section>
+
+<section>
+  <h2>Bring your own workbook</h2>
+  <p>Any correct <code>.xlsx</code> becomes a source of graded repair tasks. Inputs (constants that formulas read) and outputs (formulas nothing reads) are detected or supplied, errors are seeded close to the outputs, and the same QC and verifier apply. On a real 7-sheet workbook with 10,300 formulas: 100% of formulas evaluated, a 3-error task built in 32 s.</p>
+<pre><code>uv run ledgerlab byo model.xlsx --check
+uv run ledgerlab byo model.xlsx --bugs 3 --seed 0 --reveal</code></pre>
+</section>
+
+<section>
+  <h2>Run it</h2>
+<pre><code>git clone https://github.com/cero753/ledgerlab && cd ledgerlab
+uv sync
+uv run pytest                     # 71 tests
+uv run ledgerlab redteam          # reward table above
+uv run ledgerlab export --seed 1007 --difficulty hard --out task.xlsx --reveal
+
+# play it with Claude Code
+uv sync --extra mcp
+claude mcp add ledgerlab -- uv run --directory "$PWD" --extra mcp ledgerlab-mcp</code></pre>
+  <p class="small muted">Python 3.12+, one runtime dependency (openpyxl), no GPU. About 140 scripted episodes per second per core; a full grade takes about half a millisecond.</p>
+</section>
+
+<section>
+  <h2>Limits</h2>
+  <ul>
+    <li>One model template. LBO and three-statement templates are next.</li>
+    <li>The error taxonomy is mine, not calibrated against how often analysts make each mistake.</li>
+    <li>A formula that is right only when two inputs happen to match could pass random perturbation; targeted scenario search would close that gap.</li>
+    <li>The engine is not full Excel. VLOOKUP, INDEX/MATCH and array formulas are not supported yet, and <code>byo --check</code> lists the cells it cannot evaluate.</li>
+  </ul>
+</section>
+
+<footer>ledgerlab · MIT licence · <a href="https://github.com/cero753/ledgerlab">source</a></footer>
+</div>
+</body></html>
