@@ -1,0 +1,36 @@
+{
+ "record": {
+  "model": "abandon-test",
+  "difficulty": "easy",
+  "seed": 5,
+  "reward": 0.0,
+  "fixed_fraction": 0.0,
+  "solved": false,
+  "integrity": 1.0,
+  "bugs_fixed": [],
+  "bugs_missed": [
+   "sign_flip"
+  ],
+  "damaged_cells": [],
+  "benign_rewrites": 0,
+  "hardcoded_cells": [],
+  "bugs": [
+   "sign_flip"
+  ],
+  "tool_calls": 1,
+  "submitted": false,
+  "seconds": 2.3,
+  "cost": 0.0,
+  "error": null
+ },
+ "bugs": [
+  "CashFlow!E7: capex added instead of subtracted"
+ ],
+ "log": [
+  {
+   "tool": "list_sheets",
+   "args": {},
+   "obs": "Inputs: 34 cells, rows 1-17\nRevenue: 35 cells, rows 1-5\nPnL: 62 cells, rows 1-10\nCashFlow: 44 cells, rows 1-7\nDCF: 37 cells, rows 1-11\nNotes: 35 cells, rows 1-37"
+  }
+ ]
+}

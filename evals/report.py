@@ -53,7 +53,7 @@ def main(path=ROOT / "runs" / "results.jsonl"):
     lines += ["", "| bug kind | fix rate (all models) | n |", "|---|---|---|"]
     lines += [f"| `{k}` | {fixed[k] / seen[k]:.0%} | {seen[k]} |" for k in kinds]
     if errs:
-        lines += ["", f"{len(errs)} episode(s) excluded for provider/API errors."]
+        lines += ["", f"{len(errs)} episode(s) excluded (runner errors: provider failures or killed processes)."]
     md = "\n".join(lines)
     (ROOT / "runs" / "results.md").write_text(md + "\n")
     print(md)

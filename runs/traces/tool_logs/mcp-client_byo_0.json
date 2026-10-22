@@ -1,0 +1,44 @@
+{
+ "record": {
+  "model": "mcp-client",
+  "difficulty": "byo",
+  "seed": 0,
+  "reward": 0.0,
+  "fixed_fraction": 0.0,
+  "solved": false,
+  "integrity": 1.0,
+  "bugs_fixed": [],
+  "bugs_missed": [
+   "byo_range_short",
+   "byo_unit_mismatch",
+   "byo_unit_mismatch"
+  ],
+  "damaged_cells": [],
+  "benign_rewrites": 0,
+  "hardcoded_cells": [],
+  "bugs": [
+   "byo_range_short",
+   "byo_unit_mismatch",
+   "byo_unit_mismatch"
+  ],
+  "tool_calls": 1,
+  "submitted": true,
+  "seconds": 0.0,
+  "cost": 0.0,
+  "error": null
+ },
+ "bugs": [
+  "DCF!B6 range stops one cell short",
+  "Inputs!B8 percentage entered as a whole number",
+  "Inputs!B7 percentage entered as a whole number"
+ ],
+ "log": [
+  {
+   "tool": "submit",
+   "args": {
+    "summary": "smoke"
+   },
+   "obs": "Submitted."
+  }
+ ]
+}
