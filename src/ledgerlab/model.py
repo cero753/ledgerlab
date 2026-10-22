@@ -98,7 +98,17 @@ def fill_right(wb: Workbook, sheet: str, row: int, template, cols=FCST) -> None:
         wb.set(sheet, f"{c}{row}", template(c, shift_col(c, -1)))
 
 
-def build(spec: ModelSpec) -> Workbook:
+# Expert tier: sanctioned pattern breaks ("decoys") that look like errors but are
+# required by the spec. They live in extra Inputs rows outside INPUTS so the
+# standard tiers (and their perturbation scenarios) are unchanged.
+EXPERT_INPUTS = {
+    "mgmt_g_mult": (19, "Management case: {s3} growth multiplier, Years 4-5", 0.5),
+    "capex_prog": (20, "Capex programme multiplier, Year 3 only", 2.0),
+}
+DECOY_CELLS = [("Revenue", "F4"), ("Revenue", "G4"), ("CashFlow", "E4")]
+
+
+def build(spec: ModelSpec, expert: bool = False) -> Workbook:
     s1, s2, s3 = spec.segments
     wb = Workbook()
     for name in ("Inputs", "Revenue", "PnL", "CashFlow", "DCF", "Notes"):
@@ -181,7 +191,17 @@ def build(spec: ModelSpec) -> Workbook:
     wb.set("DCF", "B10", f"=B9-{inp('net_debt')}")
     wb.set("DCF", "B11", f"=B10/{inp('shares')}")
 
-    _write_notes(wb, spec)
+    if expert:
+        for key, (row, label, value) in EXPERT_INPUTS.items():
+            wb.set("Inputs", f"A{row}", label.format(s3=s3))
+            wb.set("Inputs", f"B{row}", value)
+        g3, mult = inp("seg3_g"), f"Inputs!$B${EXPERT_INPUTS['mgmt_g_mult'][0]}"
+        for c in ("F", "G"):
+            wb.set("Revenue", f"{c}4", f"={shift_col(c, -1)}4*(1+{g3}*{mult})")
+        wb.set("CashFlow", "E4", f"=PnL!E2*{inp('capex')}*Inputs!$B${EXPERT_INPUTS['capex_prog'][0]}")
+        _write_expert_notes(wb, spec)
+    else:
+        _write_notes(wb, spec)
     return wb
 
 
@@ -221,6 +241,34 @@ def _write_notes(wb: Workbook, spec: ModelSpec) -> None:
         "  Terminal value = Year-5 FCF x (1 + g) / (WACC - g), valued at end of Year 5,",
         "  then discounted with the Year-5 discount factor. EV = sum of PV + PV of terminal value.",
         "  Equity value = EV - net debt. Per share = equity value / diluted shares.",
+    ]
+    for n, line in enumerate(lines, start=1):
+        wb.set("Notes", f"A{n}", line)
+
+
+def _write_expert_notes(wb: Workbook, spec: ModelSpec) -> None:
+    """Assumptions + modelling conventions only; no line-by-line formulas."""
+    s1, s2, s3 = spec.segments
+    i = spec.inputs
+    lines = [
+        f"MODEL BRIEF - {spec.company}",
+        "Money in $ thousands. Column B = base year, C..G = forecast Years 1-5. Percentages stored as decimals.",
+        "",
+        "ASSUMPTIONS (signed off):",
+    ]
+    for key, (row, label, _) in INPUTS.items():
+        lines.append(f"  Inputs!B{row}  {label.format(s1=s1, s2=s2, s3=s3)} = {_fmt(key, i[key])}")
+    lines += [
+        "",
+        "MANAGEMENT CASE ADJUSTMENTS (intentional, approved by the deal team):",
+        f"  Inputs!B19  {s3} growth is scaled by this multiplier in Years 4-5 only = 0.5",
+        "  Inputs!B20  Year-3 capex is scaled by this multiplier (one-off programme) = 2.0",
+        "",
+        "HOUSE CONVENTIONS:",
+        "  Standard unlevered DCF built off a segment revenue build. Margins and cost ratios apply to same-year revenue.",
+        "  Tax is charged on operating profit after D&A. NWC is a balance; cash flow takes the year-on-year movement.",
+        "  End-of-year discounting. Gordon-growth terminal value on final-year FCF, discounted with the final-year factor.",
+        "  Equity bridge: EV less net debt, per share on diluted shares.",
     ]
     for n, line in enumerate(lines, start=1):
         wb.set("Notes", f"A{n}", line)

@@ -1,0 +1,250 @@
+{
+ "record": {
+  "model": "claude-code/sonnet",
+  "difficulty": "expert",
+  "seed": 1002,
+  "reward": 1.0,
+  "fixed_fraction": 1.0,
+  "solved": true,
+  "integrity": 1.0,
+  "bugs_fixed": [
+   "terminal_not_discounted",
+   "sys_capex_added",
+   "sys_tax_on_ebitda",
+   "anchor_slip"
+  ],
+  "bugs_missed": [],
+  "damaged_cells": [],
+  "benign_rewrites": 0,
+  "hardcoded_cells": [],
+  "bugs": [
+   "terminal_not_discounted",
+   "sys_capex_added",
+   "sys_tax_on_ebitda",
+   "anchor_slip"
+  ],
+  "tool_calls": 25,
+  "seconds": 115.2,
+  "cost": 0.0,
+  "error": null
+ },
+ "bugs": [
+  "DCF!B8 terminal value not discounted back",
+  "CashFlow row 7 adds capex back in every year",
+  "PnL row 9 taxes EBITDA instead of EBIT in every year",
+  "PnL row 5: Inputs!B9 reference not anchored, drifts right across D:G"
+ ],
+ "log": [
+  {
+   "tool": "list_sheets",
+   "args": {},
+   "obs": "Inputs: 38 cells, rows 1-20\nRevenue: 35 cells, rows 1-5\nPnL: 62 cells, rows 1-10\nCashFlow: 44 cells, rows 1-7\nDCF: 37 cells, rows 1-11\nNotes: 27 cells, rows 1-30"
+  },
+  {
+   "tool": "read_range",
+   "args": {
+    "sheet": "Notes",
+    "range": "A1:B30"
+   },
+   "obs": "A1: MODEL BRIEF - Quarry Lane Materials\nA2: Money in $ thousands. Column B = base year, C..G = forecast Years 1-5. Percentages stored as decimals.\nA4: ASSUMPTIONS (signed off):\nA5:   Inputs!B2  Core revenue, base year ($k) = 7,050\nA6:   Inputs!B3  Adjacent revenue, base year ($k) = 10,950\nA7:   Inputs!B4  New markets revenue, base year ($k) = 6,850\nA8:   Inputs!B5  Core annual growth = 13%\nA9:   Inputs!B6  Adjacent annual growth = 10%\nA10:   Inputs!B7  New markets annual growth = 15%\nA11:   Inputs!B8  Gross margin = 53%\nA12:   Inputs!B9  Operating expenses (% of revenue) = 23%\nA13:   Inputs!B10  D&A (% of revenue) = 2%\nA14:   Inputs!B11  Tax rate (on EBIT) = 30%\nA15:   Inputs!B12  Capex (% of revenue) = 3%\nA16:   Inputs!B13  Net working capital (% of revenue) = 5%\nA17:   Inputs!B14  WACC = 9%\nA18:   Inputs!B15  Terminal growth rate = 1%\nA19:   Inputs!B16  Net debt ($k) = 9,990\nA20:   Inputs!B17  Diluted shares outstanding (k) = 41,900\nA22: MANAGEMENT CASE ADJUSTMENTS (intentional, approved by the deal team):\nA23:   Inputs!B19  New markets growth is scaled by this multiplier in Years 4-5 only = 0.5\nA24:   Inputs!B20  Year-3 capex is scaled by this multiplier (one-off programme) = 2.0\nA26: HOUSE CONVENTIONS:\nA27:   Standard unlevered DCF built off a segment revenue build. Margins and cost ratios apply to same-year revenue.\nA28:   Tax is charged on operating profit after D&A. NWC is a balance; cash flow takes the year-on-year movement.\nA29:   End-of-year discounting. Gordon-growth terminal value on final-year FCF, discounted with the final-year factor.\nA30:   Equity bridge: EV less net debt, per share on diluted shares."
+  },
+  {
+   "tool": "read_range",
+   "args": {
+    "sheet": "Inputs",
+    "range": "A1:G20"
+   },
+   "obs": "A1: Quarry Lane Materials - assumptions\nB1: Value\nA2: Core revenue, base year ($k)\nB2: 7,050.00\nA3: Adjacent revenue, base year ($k)\nB3: 10,950.00\nA4: New markets revenue, base year ($k)\nB4: 6,850.00\nA5: Core annual growth\nB5: 0.13\nA6: Adjacent annual growth\nB6: 0.1\nA7: New markets annual growth\nB7: 0.15\nA8: Gross margin\nB8: 0.53\nA9: Operating expenses (% of revenue)\nB9: 0.23\nA10: D&A (% of revenue)\nB10: 0.02\nA11: Tax rate (on EBIT)\nB11: 0.3\nA12: Capex (% of revenue)\nB12: 0.03\nA13: Net working capital (% of revenue)\nB13: 0.05\nA14: WACC\nB14: 0.09\nA15: Terminal growth rate\nB15: 0.01\nA16: Net debt ($k)\nB16: 9,990.00\nA17: Diluted shares outstanding (k)\nB17: 41,900.00\nA19: Management case: New markets growth multiplier, Years 4-5\nB19: 0.5\nA20: Capex programme multiplier, Year 3 only\nB20: 2.00"
+  },
+  {
+   "tool": "read_range",
+   "args": {
+    "sheet": "Revenue",
+    "range": "A1:G5"
+   },
+   "obs": "A1: Revenue build ($k)\nB1: Base\nC1: Year 1\nD1: Year 2\nE1: Year 3\nF1: Year 4\nG1: Year 5\nA2: Core\nB2: =Inputs!$B$2 -> 7,050.00\nC2: =B2*(1+Inputs!$B$5) -> 7,966.50\nD2: =C2*(1+Inputs!$B$5) -> 9,002.14\nE2: =D2*(1+Inputs!$B$5) -> 10,172.42\nF2: =E2*(1+Inputs!$B$5) -> 11,494.84\nG2: =F2*(1+Inputs!$B$5) -> 12,989.17\nA3: Adjacent\nB3: =Inputs!$B$3 -> 10,950.00\nC3: =B3*(1+Inputs!$B$6) -> 12,045.00\nD3: =C3*(1+Inputs!$B$6) -> 13,249.50\nE3: =D3*(1+Inputs!$B$6) -> 14,574.45\nF3: =E3*(1+Inputs!$B$6) -> 16,031.90\nG3: =F3*(1+Inputs!$B$6) -> 17,635.08\nA4: New markets\nB4: =Inputs!$B$4 -> 6,850.00\nC4: =B4*(1+Inputs!$B$7) -> 7,877.50\nD4: =C4*(1+Inputs!$B$7) -> 9,059.12\nE4: =D4*(1+Inputs!$B$7) -> 10,417.99\nF4: =E4*(1+Inputs!$B$7*Inputs!$B$19) -> 11,199.34\nG4: =F4*(1+Inputs!$B$7*Inputs!$B$19) -> 12,039.29\nA5: Total revenue\nB5: =SUM(B2:B4) -> 24,850.00\nC5: =SUM(C2:C4) -> 27,889.00\nD5: =SUM(D2:D4) -> 31,310.77\nE5: =SUM(E2:E4) -> 35,164.87\nF5: =SUM(F2:F4) -> 38,726.08\nG5: =SUM(G2:G4) -> 42,663.55"
+  },
+  {
+   "tool": "read_range",
+   "args": {
+    "sheet": "PnL",
+    "range": "A1:G10"
+   },
+   "obs": "A1: Income statement ($k)\nB1: Base\nC1: Year 1\nD1: Year 2\nE1: Year 3\nF1: Year 4\nG1: Year 5\nA2: Revenue\nB2: =Revenue!B5 -> 24,850.00\nC2: =Revenue!C5 -> 27,889.00\nD2: =Revenue!D5 -> 31,310.77\nE2: =Revenue!E5 -> 35,164.87\nF2: =Revenue!F5 -> 38,726.08\nG2: =Revenue!G5 -> 42,663.55\nA3: COGS\nC3: =C2*(1-Inputs!$B$8) -> 13,107.83\nD3: =D2*(1-Inputs!$B$8) -> 14,716.06\nE3: =E2*(1-Inputs!$B$8) -> 16,527.49\nF3: =F2*(1-Inputs!$B$8) -> 18,201.26\nG3: =G2*(1-Inputs!$B$8) -> 20,051.87\nA4: Gross profit\nC4: =C2-C3 -> 14,781.17\nD4: =D2-D3 -> 16,594.71\nE4: =E2-E3 -> 18,637.38\nF4: =F2-F3 -> 20,524.82\nG4: =G2-G3 -> 22,611.68\nA5: Operating expenses\nC5: =C2*Inputs!$B$9 -> 6,414.47\nD5: =D2*Inputs!C9 -> 0\nE5: =E2*Inputs!D9 -> 0\nF5: =F2*Inputs!E9 -> 0\nG5: =G2*Inputs!F9 -> 0\nA6: EBITDA\nC6: =C4-C5 -> 8,366.70\nD6: =D4-D5 -> 16,594.71\nE6: =E4-E5 -> 18,637.38\nF6: =F4-F5 -> 20,524.82\nG6: =G4-G5 -> 22,611.68\nA7: D&A\nC7: =C2*Inputs!$B$10 -> 557.78\nD7: =D2*Inputs!$B$10 -> 626.22\nE7: =E2*Inputs!$B$10 -> 703.30\nF7: =F2*Inputs!$B$10 -> 774.52\nG7: =G2*Inputs!$B$10 -> 853.27\nA8: EBIT\nC8: =C6-C7 -> 7,808.92\nD8: =D6-D7 -> 15,968.49\nE8: =E6-E7 -> 17,934.08\nF8: =F6-F7 -> 19,750.30\nG8: =G6-G7 -> 21,758.41\nA9: Tax\nC9: =C6*Inputs!$B$11 -> 2,510.01\nD9: =D6*Inputs!$B$11 -> 4,978.41\nE9: =E6*Inputs!$B$11 -> 5,591.21\nF9: =F6*Inputs!$B$11 -> 6,157.45\nG9: =G6*Inputs!$B$11 -> 6,783.50\nA10: NOPAT\nC10: =C8-C9 -> 5,298.91\nD10: =D8-D9 -> 10,990.08\nE10: =E8-E9 -> 12,342.87\nF10: =F8-F9 -> 13,592.85\nG10: =G8-G9 -> 14,974.90"
+  },
+  {
+   "tool": "set_cell",
+   "args": {
+    "sheet": "PnL",
+    "cell": "D5",
+    "content": "=D2*Inputs!$B$9"
+   },
+   "obs": "PnL!D5 = 7,201.48 | DCF!B9 263,349.80 -> 259,106.86, DCF!B10 253,359.80 -> 249,116.86, DCF!B11 6.05 -> 5.95"
+  },
+  {
+   "tool": "set_cell",
+   "args": {
+    "sheet": "PnL",
+    "cell": "E5",
+    "content": "=E2*Inputs!$B$9"
+   },
+   "obs": "PnL!E5 = 8,087.92 | DCF!B9 259,106.86 -> 254,735.11, DCF!B10 249,116.86 -> 244,745.11, DCF!B11 5.95 -> 5.84"
+  },
+  {
+   "tool": "set_cell",
+   "args": {
+    "sheet": "PnL",
+    "cell": "F5",
+    "content": "=F2*Inputs!$B$9"
+   },
+   "obs": "PnL!F5 = 8,907.00 | DCF!B9 254,735.11 -> 250,318.15, DCF!B10 244,745.11 -> 240,328.15, DCF!B11 5.84 -> 5.74"
+  },
+  {
+   "tool": "set_cell",
+   "args": {
+    "sheet": "PnL",
+    "cell": "G5",
+    "content": "=G2*Inputs!$B$9"
+   },
+   "obs": "PnL!G5 = 9,812.62 | DCF!B9 250,318.15 -> 159,134.89, DCF!B10 240,328.15 -> 149,144.89, DCF!B11 5.74 -> 3.56"
+  },
+  {
+   "tool": "set_cell",
+   "args": {
+    "sheet": "PnL",
+    "cell": "C9",
+    "content": "=C8*Inputs!$B$11"
+   },
+   "obs": "PnL!C9 = 2,342.68 | DCF!B9 159,134.89 -> 159,288.41, DCF!B10 149,144.89 -> 149,298.41, DCF!B11 3.56 -> 3.56"
+  },
+  {
+   "tool": "set_cell",
+   "args": {
+    "sheet": "PnL",
+    "cell": "D9",
+    "content": "=D8*Inputs!$B$11"
+   },
+   "obs": "PnL!D9 = 2,630.10 | DCF!B9 159,288.41 -> 159,446.53, DCF!B10 149,298.41 -> 149,456.53, DCF!B11 3.56 -> 3.57"
+  },
+  {
+   "tool": "set_cell",
+   "args": {
+    "sheet": "PnL",
+    "cell": "E9",
+    "content": "=E8*Inputs!$B$11"
+   },
+   "obs": "PnL!E9 = 2,953.85 | DCF!B9 159,446.53 -> 159,609.45, DCF!B10 149,456.53 -> 149,619.45, DCF!B11 3.57 -> 3.57"
+  },
+  {
+   "tool": "set_cell",
+   "args": {
+    "sheet": "PnL",
+    "cell": "F9",
+    "content": "=F8*Inputs!$B$11"
+   },
+   "obs": "PnL!F9 = 3,252.99 | DCF!B9 159,609.45 -> 159,774.06, DCF!B10 149,619.45 -> 149,784.06, DCF!B11 3.57 -> 3.57"
+  },
+  {
+   "tool": "set_cell",
+   "args": {
+    "sheet": "PnL",
+    "cell": "G9",
+    "content": "=G8*Inputs!$B$11"
+   },
+   "obs": "PnL!G9 = 3,583.74 | DCF!B9 159,774.06 -> 163,172.19, DCF!B10 149,784.06 -> 153,182.19, DCF!B11 3.57 -> 3.66"
+  },
+  {
+   "tool": "read_range",
+   "args": {
+    "sheet": "CashFlow",
+    "range": "A1:G7"
+   },
+   "obs": "A1: Unlevered free cash flow ($k)\nB1: Base\nC1: Year 1\nD1: Year 2\nE1: Year 3\nF1: Year 4\nG1: Year 5\nA2: NOPAT\nC2: =PnL!C10 -> 5,466.24\nD2: =PnL!D10 -> 6,136.91\nE2: =PnL!E10 -> 6,892.31\nF2: =PnL!F10 -> 7,590.31\nG2: =PnL!G10 -> 8,362.06\nA3: Add: D&A\nC3: =PnL!C7 -> 557.78\nD3: =PnL!D7 -> 626.22\nE3: =PnL!E7 -> 703.30\nF3: =PnL!F7 -> 774.52\nG3: =PnL!G7 -> 853.27\nA4: Less: capex\nC4: =PnL!C2*Inputs!$B$12 -> 836.67\nD4: =PnL!D2*Inputs!$B$12 -> 939.32\nE4: =PnL!E2*Inputs!$B$12*Inputs!$B$20 -> 2,109.89\nF4: =PnL!F2*Inputs!$B$12 -> 1,161.78\nG4: =PnL!G2*Inputs!$B$12 -> 1,279.91\nA5: Net working capital\nB5: =PnL!B2*Inputs!$B$13 -> 1,242.50\nC5: =PnL!C2*Inputs!$B$13 -> 1,394.45\nD5: =PnL!D2*Inputs!$B$13 -> 1,565.54\nE5: =PnL!E2*Inputs!$B$13 -> 1,758.24\nF5: =PnL!F2*Inputs!$B$13 -> 1,936.30\nG5: =PnL!G2*Inputs!$B$13 -> 2,133.18\nA6: Less: increase in NWC\nC6: =C5-B5 -> 151.95\nD6: =D5-C5 -> 171.09\nE6: =E5-D5 -> 192.70\nF6: =F5-E5 -> 178.06\nG6: =G5-F5 -> 196.87\nA7: Unlevered FCF\nC7: =C2+C3+C4-C6 -> 6,708.74\nD7: =D2+D3+D4-D6 -> 7,531.36\nE7: =E2+E3+E4-E6 -> 9,512.80\nF7: =F2+F3+F4-F6 -> 9,348.55\nG7: =G2+G3+G4-G6 -> 10,298.36"
+  },
+  {
+   "tool": "read_range",
+   "args": {
+    "sheet": "DCF",
+    "range": "A1:G11"
+   },
+   "obs": "A1: Discounted cash flow\nB1: Base\nC1: Year 1\nD1: Year 2\nE1: Year 3\nF1: Year 4\nG1: Year 5\nA2: Period\nC2: 1.00\nD2: 2.00\nE2: 3.00\nF2: 4.00\nG2: 5.00\nA3: Discount factor\nC3: =1/(1+Inputs!$B$14)^C2 -> 0.917431\nD3: =1/(1+Inputs!$B$14)^D2 -> 0.84168\nE3: =1/(1+Inputs!$B$14)^E2 -> 0.772183\nF3: =1/(1+Inputs!$B$14)^F2 -> 0.708425\nG3: =1/(1+Inputs!$B$14)^G2 -> 0.649931\nA4: PV of FCF\nC4: =CashFlow!C7*C3 -> 6,154.81\nD4: =CashFlow!D7*D3 -> 6,339.00\nE4: =CashFlow!E7*E3 -> 7,345.63\nF4: =CashFlow!F7*F3 -> 6,622.75\nG4: =CashFlow!G7*G3 -> 6,693.23\nA6: Sum of PV of FCF\nB6: =SUM(C4:G4) -> 33,155.41\nA7: Terminal value (Gordon growth, at Year 5)\nB7: =CashFlow!G7*(1+Inputs!$B$15)/(Inputs!$B$14-Inputs!$B$15) -> 130,016.78\nA8: PV of terminal value\nB8: =B7 -> 130,016.78\nA9: Enterprise value\nB9: =B6+B8 -> 163,172.19\nA10: Equity value\nB10: =B9-Inputs!$B$16 -> 153,182.19\nA11: Equity value per share ($)\nB11: =B10/Inputs!$B$17 -> 3.66"
+  },
+  {
+   "tool": "set_cell",
+   "args": {
+    "sheet": "CashFlow",
+    "cell": "C7",
+    "content": "=C2+C3-C4-C6"
+   },
+   "obs": "CashFlow!C7 = 5,035.40 | DCF!B9 163,172.19 -> 161,637.02, DCF!B10 153,182.19 -> 151,647.02, DCF!B11 3.66 -> 3.62"
+  },
+  {
+   "tool": "set_cell",
+   "args": {
+    "sheet": "CashFlow",
+    "cell": "D7",
+    "content": "=D2+D3-D4-D6"
+   },
+   "obs": "CashFlow!D7 = 5,652.71 | DCF!B9 161,637.02 -> 160,055.80, DCF!B10 151,647.02 -> 150,065.80, DCF!B11 3.62 -> 3.58"
+  },
+  {
+   "tool": "set_cell",
+   "args": {
+    "sheet": "CashFlow",
+    "cell": "E7",
+    "content": "=E2+E3-E4-E6"
+   },
+   "obs": "CashFlow!E7 = 5,293.01 | DCF!B9 160,055.80 -> 156,797.35, DCF!B10 150,065.80 -> 146,807.35, DCF!B11 3.58 -> 3.50"
+  },
+  {
+   "tool": "set_cell",
+   "args": {
+    "sheet": "CashFlow",
+    "cell": "F7",
+    "content": "=F2+F3-F4-F6"
+   },
+   "obs": "CashFlow!F7 = 7,024.99 | DCF!B9 156,797.35 -> 155,151.28, DCF!B10 146,807.35 -> 145,161.28, DCF!B11 3.50 -> 3.46"
+  },
+  {
+   "tool": "set_cell",
+   "args": {
+    "sheet": "CashFlow",
+    "cell": "G7",
+    "content": "=G2+G3-G4-G6"
+   },
+   "obs": "CashFlow!G7 = 7,738.55 | DCF!B9 155,151.28 -> 121,169.94, DCF!B10 145,161.28 -> 111,179.94, DCF!B11 3.46 -> 2.65"
+  },
+  {
+   "tool": "set_cell",
+   "args": {
+    "sheet": "DCF",
+    "cell": "B8",
+    "content": "=B7*G3"
+   },
+   "obs": "DCF!B8 = 63,497.74 | DCF!B9 121,169.94 -> 86,968.54, DCF!B10 111,179.94 -> 76,978.54, DCF!B11 2.65 -> 1.84"
+  },
+  {
+   "tool": "read_range",
+   "args": {
+    "sheet": "CashFlow",
+    "range": "A1:G7"
+   },
+   "obs": "A1: Unlevered free cash flow ($k)\nB1: Base\nC1: Year 1\nD1: Year 2\nE1: Year 3\nF1: Year 4\nG1: Year 5\nA2: NOPAT\nC2: =PnL!C10 -> 5,466.24\nD2: =PnL!D10 -> 6,136.91\nE2: =PnL!E10 -> 6,892.31\nF2: =PnL!F10 -> 7,590.31\nG2: =PnL!G10 -> 8,362.06\nA3: Add: D&A\nC3: =PnL!C7 -> 557.78\nD3: =PnL!D7 -> 626.22\nE3: =PnL!E7 -> 703.30\nF3: =PnL!F7 -> 774.52\nG3: =PnL!G7 -> 853.27\nA4: Less: capex\nC4: =PnL!C2*Inputs!$B$12 -> 836.67\nD4: =PnL!D2*Inputs!$B$12 -> 939.32\nE4: =PnL!E2*Inputs!$B$12*Inputs!$B$20 -> 2,109.89\nF4: =PnL!F2*Inputs!$B$12 -> 1,161.78\nG4: =PnL!G2*Inputs!$B$12 -> 1,279.91\nA5: Net working capital\nB5: =PnL!B2*Inputs!$B$13 -> 1,242.50\nC5: =PnL!C2*Inputs!$B$13 -> 1,394.45\nD5: =PnL!D2*Inputs!$B$13 -> 1,565.54\nE5: =PnL!E2*Inputs!$B$13 -> 1,758.24\nF5: =PnL!F2*Inputs!$B$13 -> 1,936.30\nG5: =PnL!G2*Inputs!$B$13 -> 2,133.18\nA6: Less: increase in NWC\nC6: =C5-B5 -> 151.95\nD6: =D5-C5 -> 171.09\nE6: =E5-D5 -> 192.70\nF6: =F5-E5 -> 178.06\nG6: =G5-F5 -> 196.87\nA7: Unlevered FCF\nC7: =C2+C3-C4-C6 -> 5,035.40\nD7: =D2+D3-D4-D6 -> 5,652.71\nE7: =E2+E3-E4-E6 -> 5,293.01\nF7: =F2+F3-F4-F6 -> 7,024.99\nG7: =G2+G3-G4-G6 -> 7,738.55"
+  },
+  {
+   "tool": "read_range",
+   "args": {
+    "sheet": "DCF",
+    "range": "A1:G11"
+   },
+   "obs": "A1: Discounted cash flow\nB1: Base\nC1: Year 1\nD1: Year 2\nE1: Year 3\nF1: Year 4\nG1: Year 5\nA2: Period\nC2: 1.00\nD2: 2.00\nE2: 3.00\nF2: 4.00\nG2: 5.00\nA3: Discount factor\nC3: =1/(1+Inputs!$B$14)^C2 -> 0.917431\nD3: =1/(1+Inputs!$B$14)^D2 -> 0.84168\nE3: =1/(1+Inputs!$B$14)^E2 -> 0.772183\nF3: =1/(1+Inputs!$B$14)^F2 -> 0.708425\nG3: =1/(1+Inputs!$B$14)^G2 -> 0.649931\nA4: PV of FCF\nC4: =CashFlow!C7*C3 -> 4,619.64\nD4: =CashFlow!D7*D3 -> 4,757.78\nE4: =CashFlow!E7*E3 -> 4,087.18\nF4: =CashFlow!F7*F3 -> 4,976.68\nG4: =CashFlow!G7*G3 -> 5,029.52\nA6: Sum of PV of FCF\nB6: =SUM(C4:G4) -> 23,470.80\nA7: Terminal value (Gordon growth, at Year 5)\nB7: =CashFlow!G7*(1+Inputs!$B$15)/(Inputs!$B$14-Inputs!$B$15) -> 97,699.15\nA8: PV of terminal value\nB8: =B7*G3 -> 63,497.74\nA9: Enterprise value\nB9: =B6+B8 -> 86,968.54\nA10: Equity value\nB10: =B9-Inputs!$B$16 -> 76,978.54\nA11: Equity value per share ($)\nB11: =B10/Inputs!$B$17 -> 1.84"
+  },
+  {
+   "tool": "submit",
+   "args": {
+    "summary": "Fixed four errors: (1) PnL D5:G5 opex referenced empty Inputs!C9:F9 instead of $B$9; (2) PnL C9:G9 tax was computed on EBITDA (row6) instead of EBIT (row8) per Notes \"tax on operating profit after D&A\"; (3) CashFlow C7:G7 FCF formula added capex instead of subtracting it; (4) DCF B8 PV of terminal value was undiscounted, now =B7*G3 to apply final-year discount factor per Notes convention. Final: EV 86,968.54k, Equity 76,978.54k, $1.84/share."
+   },
+   "obs": "Submitted."
+  }
+ ]
+}

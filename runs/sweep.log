@@ -27,3 +27,9 @@ claude-code/opus       hard   seed=1000 reward=1.00 fixed=['tax_on_ebitda', 'per
 claude-code/opus       hard   seed=1001 reward=1.00 fixed=['anchor_slip', 'terminal_wrong_year', 'unit_mismatch', 'crosslink_wrong', 'discount_off_by_one'] missed=[] calls=20
 claude-code/opus       hard   seed=1002 reward=1.00 fixed=['crosslink_wrong', 'terminal_not_discounted', 'tax_on_ebitda', 'period_mislink', 'anchor_slip'] missed=[] calls=16
 claude-code/opus       hard   seed=1003 reward=1.00 fixed=['nwc_level_not_change', 'growth_chain_break', 'period_mislink', 'range_omission', 'sign_flip'] missed=[] calls=13
+5 episodes
+claude-code/haiku      expert seed=1000 ERROR no submit
+claude-code/haiku      expert seed=1001 reward=1.00 fixed=['terminal_over_wacc', 'anchor_slip', 'sys_tax_on_ebitda', 'sys_capex_added'] missed=[] calls=52
+claude-code/haiku      expert seed=1002 ERROR no submit
+claude-code/sonnet     expert seed=1001 reward=1.00 fixed=['terminal_over_wacc', 'anchor_slip', 'sys_tax_on_ebitda', 'sys_capex_added'] missed=[] calls=26
+claude-code/sonnet     expert seed=1002 reward=1.00 fixed=['terminal_not_discounted', 'sys_capex_added', 'sys_tax_on_ebitda', 'anchor_slip'] missed=[] calls=25

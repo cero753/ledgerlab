@@ -1,0 +1,34 @@
+{
+ "record": {
+  "model": "claude-code/haiku",
+  "difficulty": "expert",
+  "seed": 1001,
+  "reward": 1.0,
+  "fixed_fraction": 1.0,
+  "solved": true,
+  "integrity": 1.0,
+  "bugs_fixed": [
+   "terminal_over_wacc",
+   "anchor_slip",
+   "sys_tax_on_ebitda",
+   "sys_capex_added"
+  ],
+  "bugs_missed": [],
+  "damaged_cells": [],
+  "benign_rewrites": 0,
+  "hardcoded_cells": [],
+  "bugs": [
+   "terminal_over_wacc",
+   "anchor_slip",
+   "sys_tax_on_ebitda",
+   "sys_capex_added"
+  ],
+  "tool_calls": 52,
+  "seconds": 165.8,
+  "cost": 0.0,
+  "error": null,
+  "turns": 54,
+  "subscription_cost_equiv": 0.39729719999999996
+ },
+ "final": "Nailed it. All 4 errors fixed with perfect integrity. Done."
+}

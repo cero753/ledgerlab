@@ -8,12 +8,15 @@ reproducible bit-for-bit and removes any dependency on Excel or LibreOffice.
 
 from __future__ import annotations
 
+import datetime
+import fnmatch
 import math
 import re
 from dataclasses import dataclass, field
 from functools import lru_cache
 
 Content = float | int | str | None  # str starting with "=" is a formula
+_EXCEL_EPOCH = datetime.datetime(1899, 12, 30)
 
 
 # --------------------------------------------------------------------------- #
@@ -80,14 +83,19 @@ _TOKEN_RE = re.compile(
     r"""
     (?P<ws>\s+)
   | (?P<func>[A-Z]+(?=\())
-  | (?P<ref>(?:[A-Za-z_][A-Za-z0-9_]*!)?\$?[A-Z]{1,3}\$?\d+(?::\$?[A-Z]{1,3}\$?\d+)?)
+  | (?P<ref>(?:(?:'[^']+'|[A-Za-z_][A-Za-z0-9_.]*)!)?\$?[A-Z]{1,3}\$?\d+(?::\$?[A-Z]{1,3}\$?\d+)?)
   | (?P<num>\d+(?:\.\d*)?(?:[eE][+-]?\d+)?|\.\d+)
-  | (?P<op>[-+*/^(),])
+  | (?P<str>"(?:[^"]|"")*")
+  | (?P<bool>TRUE|FALSE)
+  | (?P<cmp><=|>=|<>|[<>=])
+  | (?P<op>[-+*/^(),%&])
     """,
     re.X,
 )
 
-FUNCS = {"SUM", "AVERAGE", "MIN", "MAX", "ROUND", "ABS"}
+FUNCS = {"SUM", "AVERAGE", "MIN", "MAX", "ROUND", "ABS", "IF", "IFERROR", "AND", "OR", "NOT",
+         "SUMPRODUCT", "NPV", "SUMIF", "SUMIFS", "COUNTIF", "COUNTIFS", "AVERAGEIF", "AVERAGEIFS",
+         "TODAY", "DATE", "YEAR", "MONTH", "DAY", "EOMONTH", "EDATE", "TEXT", "CONCAT", "CONCATENATE"}
 
 
 def _tokenize(src: str) -> list[tuple[str, str]]:
@@ -124,6 +132,20 @@ class _Parser:
         return node
 
     def expr(self):
+        node = self.concat()
+        while self.peek()[0] == "cmp":
+            op = self.take()[1]
+            node = ("cmp", op, node, self.concat())
+        return node
+
+    def concat(self):
+        node = self.additive()
+        while self.peek()[1] == "&":
+            self.take()
+            node = ("cat", node, self.additive())
+        return node
+
+    def additive(self):
         node = self.term()
         while self.peek()[1] in ("+", "-"):
             op = self.take()[1]
@@ -144,6 +166,12 @@ class _Parser:
             node = ("bin", "^", node, self.power())
         return node
 
+    def postfix(self, node):
+        while self.peek()[1] == "%":
+            self.take()
+            node = ("bin", "/", node, ("num", 100.0))
+        return node
+
     def unary(self):
         if self.peek()[1] == "-":
             self.take()
@@ -154,10 +182,19 @@ class _Parser:
         return self.primary()
 
     def primary(self):
+        return self.postfix(self._primary())
+
+    def _primary(self):
         kind, val = self.peek()
         if kind == "num":
             self.take()
             return ("num", float(val))
+        if kind == "str":
+            self.take()
+            return ("str", val[1:-1].replace('""', '"'))
+        if kind == "bool":
+            self.take()
+            return ("num", 1.0 if val == "TRUE" else 0.0)
         if kind == "func":
             self.take()
             if val not in FUNCS:
@@ -194,7 +231,8 @@ class _Parser:
     def _ref(self, text):
         sheet = self.sheet
         if "!" in text:
-            sheet, text = text.split("!", 1)
+            sheet, text = text.rsplit("!", 1)
+            sheet = sheet.strip("'")
         if ":" in text:
             a, b = text.split(":")
             return ("range", sheet, tuple(expand_range(a.replace("$", ""), b.replace("$", ""))))
@@ -223,7 +261,10 @@ def references(formula: str, sheet: str) -> list[tuple[str, str]]:
             out.extend((n[1], a) for a in n[2])
         elif k == "neg":
             walk(n[1])
-        elif k == "bin":
+        elif k == "cat":
+            walk(n[1])
+            walk(n[2])
+        elif k in ("bin", "cmp"):
             walk(n[2])
             walk(n[3])
         elif k == "call":
@@ -241,6 +282,76 @@ def references(formula: str, sheet: str) -> list[tuple[str, str]]:
 
 def is_formula(content: Content) -> bool:
     return isinstance(content, str) and content.startswith("=")
+
+
+# --------------------------------------------------------------------------- #
+# Scalar helpers (Excel semantics, simplified)
+# --------------------------------------------------------------------------- #
+
+TODAY_SERIAL = 46317  # TODAY() is frozen (2026-10-22) so rewards stay deterministic
+
+
+def _serial(y: int, m: int, d: int) -> float:
+    y += (m - 1) // 12
+    m = (m - 1) % 12 + 1
+    return float((datetime.datetime(y, m, d) - _EXCEL_EPOCH).days)
+
+
+def _from_serial(v: float) -> datetime.datetime:
+    return _EXCEL_EPOCH + datetime.timedelta(days=int(v))
+
+
+def _days_in(y: int, m: int) -> int:
+    y += (m - 1) // 12
+    m = (m - 1) % 12 + 1
+    nxt = datetime.datetime(y + (m == 12), m % 12 + 1, 1)
+    return (nxt - datetime.datetime(y, m, 1)).days
+
+
+def _text(v) -> str:
+    if v is None:
+        return ""
+    if isinstance(v, float) and v.is_integer():
+        return str(int(v))
+    return str(v)
+
+
+def _compare(a, b, op: str) -> bool:
+    # empty cells compare as 0 against numbers and "" against text
+    if a is None:
+        a = "" if isinstance(b, str) else 0.0
+    if b is None:
+        b = "" if isinstance(a, str) else 0.0
+    if isinstance(a, str) and isinstance(b, str):
+        a, b = a.lower(), b.lower()
+    elif isinstance(a, str) or isinstance(b, str):  # Excel: numbers sort before text
+        if op in ("=", "<>"):
+            return op == "<>"
+        a, b = (1, 0) if isinstance(a, str) else (0, 1)
+    return {"=": a == b, "<>": a != b, "<": a < b, ">": a > b, "<=": a <= b, ">=": a >= b}[op]
+
+
+_CRIT_RE = re.compile(r"^(<=|>=|<>|<|>|=)?(.*)$", re.S)
+
+
+def _criteria(value, crit) -> bool:
+    if not isinstance(crit, str):
+        return value is not None and _compare(value, crit, "=")
+    op, rest = _CRIT_RE.match(crit).groups()
+    op = op or "="
+    try:
+        target = float(rest)
+    except ValueError:
+        target = rest
+    if target == "" and op in ("=", "<>"):
+        empty = value is None or value == ""
+        return empty if op == "=" else not empty
+    if isinstance(target, str) and op in ("=", "<>") and any(ch in target for ch in "*?"):
+        hit = isinstance(value, str) and fnmatch.fnmatchcase(value.lower(), target.lower())
+        return hit if op == "=" else not hit
+    if isinstance(target, float) and not isinstance(value, (int, float)):
+        return op == "<>"
+    return _compare(value, target, op)
 
 
 @dataclass
@@ -294,7 +405,7 @@ class Workbook:
         else:
             stack.add(key)
             try:
-                v = self._eval(parse_formula(content, sheet), stack)
+                v = self._x(parse_formula(content, sheet), stack)
                 if isinstance(v, float) and (math.isnan(v) or math.isinf(v)):
                     v = CellError("#NUM!")
             except _EvalError as e:
@@ -303,28 +414,40 @@ class Workbook:
                 v = CellError("#DIV/0!")
             except OverflowError:
                 v = CellError("#NUM!")
+            except (TypeError, ValueError):
+                v = CellError("#VALUE!")
             stack.discard(key)
         self._cache[key] = v
         return v
 
-    def _num(self, sheet, addr, stack) -> float:
+    # Values are float | str | None (empty). _x returns a scalar; _eval coerces to number.
+    def _cell(self, sheet, addr, stack):
         v = self._value(sheet, addr, stack)
-        if v is None:
-            return 0.0
         if isinstance(v, CellError):
             raise _EvalError(str(v))
+        return v
+
+    @staticmethod
+    def _to_num(v) -> float:
+        if v is None:
+            return 0.0
         if isinstance(v, str):
             raise _EvalError("#VALUE!")
         return float(v)
 
     def _eval(self, n, stack) -> float:
+        return self._to_num(self._x(n, stack))
+
+    def _x(self, n, stack):
         k = n[0]
-        if k == "num":
+        if k in ("num", "str"):
             return n[1]
         if k == "ref":
-            return self._num(n[1], n[2], stack)
+            return self._cell(n[1], n[2], stack)
         if k == "neg":
             return -self._eval(n[1], stack)
+        if k == "cat":
+            return _text(self._x(n[1], stack)) + _text(self._x(n[2], stack))
         if k == "bin":
             a, b = self._eval(n[2], stack), self._eval(n[3], stack)
             op = n[1]
@@ -337,35 +460,137 @@ class Workbook:
             if op == "/":
                 return a / b
             return a**b
+        if k == "cmp":
+            return float(_compare(self._x(n[2], stack), self._x(n[3], stack), n[1]))
         if k == "call":
-            name, args = n[1], n[2]
-            if name == "ROUND":
-                if len(args) != 2:
-                    raise _EvalError("#VALUE!")
-                return float(round(self._eval(args[0], stack), int(self._eval(args[1], stack))))
-            if name == "ABS":
-                if len(args) != 1:
-                    raise _EvalError("#VALUE!")
-                return abs(self._eval(args[0], stack))
-            vals: list[float] = []
-            for a in args:
-                if a[0] == "range":
-                    for addr in a[2]:
-                        v = self._value(a[1], addr, stack)
-                        if isinstance(v, CellError):
-                            raise _EvalError(str(v))
-                        if isinstance(v, (int, float)):
-                            vals.append(float(v))
-                else:
-                    vals.append(self._eval(a, stack))
-            if name == "SUM":
-                return sum(vals)
-            if not vals:
-                raise _EvalError("#DIV/0!" if name == "AVERAGE" else "#VALUE!")
-            if name == "AVERAGE":
-                return sum(vals) / len(vals)
-            return min(vals) if name == "MIN" else max(vals)
+            return self._call(n[1], n[2], stack)
         raise _EvalError("#VALUE!")
+
+    def _truthy(self, n, stack) -> bool:
+        v = self._x(n, stack)
+        if isinstance(v, str):
+            if v.upper() in ("TRUE", "FALSE"):
+                return v.upper() == "TRUE"
+            raise _EvalError("#VALUE!")
+        return bool(v)
+
+    def _call(self, name, args, stack):
+        if name == "IF":
+            if len(args) not in (2, 3):
+                raise _EvalError("#VALUE!")
+            if self._truthy(args[0], stack):
+                return self._x(args[1], stack)
+            return self._x(args[2], stack) if len(args) == 3 else 0.0
+        if name == "IFERROR":
+            if len(args) != 2:
+                raise _EvalError("#VALUE!")
+            try:
+                return self._x(args[0], stack)
+            except (_EvalError, ZeroDivisionError, OverflowError):
+                return self._x(args[1], stack)
+        if name == "NOT":
+            return float(not self._truthy(args[0], stack))
+        if name in ("AND", "OR"):
+            vals = [bool(v) for a in args for v in self._range_vals(a, stack)]
+            return float(all(vals) if name == "AND" else any(vals))
+        if name == "SUMPRODUCT":
+            cols = [self._range_vals(a, stack) for a in args]
+            if len({len(c) for c in cols}) != 1:
+                raise _EvalError("#VALUE!")
+            total = 0.0
+            for row in zip(*cols):
+                p = 1.0
+                for x in row:
+                    p *= x
+                total += p
+            return total
+        if name == "NPV":
+            rate = self._eval(args[0], stack)
+            flows = [v for a in args[1:] for v in self._range_vals(a, stack)]
+            return sum(v / (1 + rate) ** (i + 1) for i, v in enumerate(flows))
+        if name == "ROUND":
+            if len(args) != 2:
+                raise _EvalError("#VALUE!")
+            return float(round(self._eval(args[0], stack), int(self._eval(args[1], stack))))
+        if name == "ABS":
+            return abs(self._eval(args[0], stack))
+        if name in ("SUMIF", "SUMIFS", "COUNTIF", "COUNTIFS", "AVERAGEIF", "AVERAGEIFS"):
+            return self._conditional(name, args, stack)
+        if name == "TODAY":
+            return float(TODAY_SERIAL)
+        if name == "DATE":
+            y, m, d = (int(self._eval(a, stack)) for a in args)
+            return _serial(y, m, 1) + d - 1
+        if name in ("YEAR", "MONTH", "DAY"):
+            dt = _from_serial(self._eval(args[0], stack))
+            return float({"YEAR": dt.year, "MONTH": dt.month, "DAY": dt.day}[name])
+        if name in ("EOMONTH", "EDATE"):
+            dt = _from_serial(self._eval(args[0], stack))
+            months = dt.year * 12 + dt.month - 1 + int(self._eval(args[1], stack))
+            y, m = divmod(months, 12)
+            if name == "EDATE":
+                return _serial(y, m + 1, min(dt.day, _days_in(y, m + 1)))
+            return _serial(y, m + 1, _days_in(y, m + 1))
+        if name == "TEXT":
+            return _text(self._x(args[0], stack))
+        if name in ("CONCAT", "CONCATENATE"):
+            return "".join(_text(self._x(a, stack)) for a in args)
+        vals: list[float] = []
+        for a in args:
+            if a[0] == "range":
+                for addr in a[2]:
+                    v = self._cell(a[1], addr, stack)
+                    if isinstance(v, (int, float)):
+                        vals.append(float(v))
+            else:
+                vals.append(self._eval(a, stack))
+        if name == "SUM":
+            return sum(vals)
+        if not vals:
+            if name in ("MIN", "MAX"):
+                return 0.0
+            raise _EvalError("#DIV/0!")
+        if name == "AVERAGE":
+            return sum(vals) / len(vals)
+        return min(vals) if name == "MIN" else max(vals)
+
+    def _cells_of(self, a, stack) -> list:
+        if a[0] != "range":
+            return [self._x(a, stack)]
+        return [self._cell(a[1], addr, stack) for addr in a[2]]
+
+    def _conditional(self, name, args, stack):
+        if name in ("SUMIF", "AVERAGEIF"):
+            rng, crit = self._cells_of(args[0], stack), self._x(args[1], stack)
+            target = self._cells_of(args[2], stack) if len(args) == 3 else rng
+            pairs = [(rng, crit)]
+        elif name == "COUNTIF":
+            target, pairs = None, [(self._cells_of(args[0], stack), self._x(args[1], stack))]
+        elif name == "COUNTIFS":
+            target = None
+            pairs = [(self._cells_of(args[i], stack), self._x(args[i + 1], stack))
+                     for i in range(0, len(args), 2)]
+        else:  # SUMIFS / AVERAGEIFS: target range first
+            target = self._cells_of(args[0], stack)
+            pairs = [(self._cells_of(args[i], stack), self._x(args[i + 1], stack))
+                     for i in range(1, len(args), 2)]
+        n = len(pairs[0][0])
+        if any(len(r) != n for r, _ in pairs) or (target is not None and len(target) != n):
+            raise _EvalError("#VALUE!")
+        hits = [i for i in range(n) if all(_criteria(r[i], c) for r, c in pairs)]
+        if target is None:
+            return float(len(hits))
+        nums = [float(target[i]) for i in hits if isinstance(target[i], (int, float))]
+        if name.startswith("AVERAGE"):
+            if not nums:
+                raise _EvalError("#DIV/0!")
+            return sum(nums) / len(nums)
+        return sum(nums)
+
+    def _range_vals(self, a, stack) -> list[float]:
+        if a[0] != "range":
+            return [self._eval(a, stack)]
+        return [float(v) if isinstance(v, (int, float)) else 0.0 for v in self._cells_of(a, stack)]
 
     def evaluate_all(self) -> dict[tuple[str, str], object]:
         return {(s, a): self.value(s, a) for s, a, _ in self.cells()}
@@ -396,6 +621,14 @@ class Workbook:
             wb.add_sheet(ws.title)
             for row in ws.iter_rows():
                 for c in row:
-                    if c.value is not None:
-                        wb.sheets[ws.title][c.coordinate] = c.value
+                    v = c.value
+                    if v is None:
+                        continue
+                    if isinstance(v, bool):
+                        v = float(v)
+                    elif isinstance(v, (datetime.datetime, datetime.date)):
+                        v = float((datetime.datetime(v.year, v.month, v.day) - _EXCEL_EPOCH).days)
+                    elif not isinstance(v, (int, float, str)):
+                        v = getattr(v, "text", None) or str(v)  # array formulas etc.
+                    wb.sheets[ws.title][c.coordinate] = v
         return wb

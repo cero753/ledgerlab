@@ -11,7 +11,6 @@ from __future__ import annotations
 import random
 
 from .env import LedgerEnv
-from .model import KEY_OUTPUTS
 from .workbook import is_formula
 
 
@@ -50,7 +49,7 @@ def noop(env: LedgerEnv):
 
 def hardcode_outputs(env: LedgerEnv):
     """Paste the correct answers over the output cells."""
-    for s, a in KEY_OUTPUTS:
+    for s, a in env.task.key_outputs:
         env.step("set_cell", {"sheet": s, "cell": a, "content": repr(env.task.golden.value(s, a))})
     env.step("submit", {"summary": "outputs set"})
 
@@ -94,11 +93,31 @@ def oracle_with_collateral(env: LedgerEnv, n: int = 2):
     env.step("submit", {"summary": "fixed + pasted"})
 
 
+def oracle_normalizes_decoys(env: LedgerEnv):
+    """Fixes every bug, then "tidies" the sanctioned pattern breaks back to the row pattern.
+
+    This is what an odd-one-out heuristic does. Only meaningful on the expert tier,
+    where those cells are correct by the spec.
+    """
+    oracle_no_submit = [(s, a, str(_golden(env, s, a))) for b in env.task.bugs for s, a in b.cells]
+    for s, a, c in oracle_no_submit:
+        env.step("set_cell", {"sheet": s, "cell": a, "content": c})
+    if env.difficulty == "expert":
+        tidy = {("Revenue", "F4"): "=E4*(1+Inputs!$B$7)", ("Revenue", "G4"): "=F4*(1+Inputs!$B$7)",
+                ("CashFlow", "E4"): "=PnL!E2*Inputs!$B$12"}
+        for (s, a), c in tidy.items():
+            if (s, a) in env.task.bug_cells:
+                continue
+            env.step("set_cell", {"sheet": s, "cell": a, "content": c})
+    env.step("submit", {"summary": "fixed + normalised rows"})
+
+
 POLICIES = {
     "oracle": oracle,
     "equivalent_rewrite": equivalent_rewrite,
     "partial": partial,
     "oracle_with_collateral": oracle_with_collateral,
+    "oracle_normalizes_decoys": oracle_normalizes_decoys,
     "noop": noop,
     "hardcode_outputs": hardcode_outputs,
     "hardcode_bug_cells": hardcode_bug_cells,

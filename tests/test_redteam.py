@@ -6,7 +6,7 @@ import pytest
 from ledgerlab.policies import run
 
 SEEDS = range(25)
-TIERS = ["easy", "medium", "hard"]
+TIERS = ["easy", "medium", "hard", "expert"]
 
 
 def mean_reward(policy, difficulty):
@@ -44,3 +44,10 @@ def test_partial_credit_is_graded(difficulty):
 def test_collateral_damage_is_penalised():
     r = run("oracle_with_collateral", 0, "medium")
     assert len(r.damaged_cells) == 2 and r.reward < 0.5
+
+
+def test_tidying_sanctioned_decoys_is_penalised():
+    for s in range(10):
+        r = run("oracle_normalizes_decoys", s, "expert")
+        assert r.fixed_fraction == 1.0
+        assert len(r.damaged_cells) >= 1 and r.reward < 0.75

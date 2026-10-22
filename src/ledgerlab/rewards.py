@@ -54,9 +54,18 @@ def _close(x, y) -> bool:
     return abs(x - y) <= MATCH_TOL * max(1.0, abs(y))
 
 
-def scenarios(task: Task, k: int = N_PERTURB) -> list[dict[str, float]]:
-    """K seeded perturbations of every assumption (Inputs!B2:B17)."""
+def scenarios(task: Task, k: int = N_PERTURB) -> list[dict[tuple[str, str], float]]:
+    """K seeded perturbations of every assumption cell."""
     rng = random.Random(f"perturb:{task.difficulty}:{task.seed}")
+    if task.input_cells is not None:  # bring-your-own workbook: perturb detected inputs
+        out = []
+        for _ in range(k):
+            sc = {}
+            for s, a in task.input_cells:
+                v = float(task.golden.get(s, a))
+                sc[(s, a)] = v * rng.uniform(0.85, 1.15) + (rng.uniform(-0.005, 0.005) if abs(v) < 1 else 0)
+            out.append(sc)
+        return out
     base = task.spec.inputs
     out = []
     for _ in range(k):
@@ -66,14 +75,14 @@ def scenarios(task: Task, k: int = N_PERTURB) -> list[dict[str, float]]:
                 sc[key] += rng.uniform(-0.01, 0.01)
             if sc["wacc"] - sc["tg"] > 0.02:
                 break
-        out.append({INPUT_CELLS[key]: v for key, v in sc.items()})
+        out.append({("Inputs", INPUT_CELLS[key]): v for key, v in sc.items()})
     return out
 
 
-def _with_inputs(wb: Workbook, sc: dict[str, float]) -> Workbook:
+def _with_inputs(wb: Workbook, sc: dict[tuple[str, str], float]) -> Workbook:
     wb = wb.copy()
-    for addr, v in sc.items():
-        wb.set("Inputs", addr, v)
+    for (s, addr), v in sc.items():
+        wb.set(s, addr, v)
     return wb
 
 
@@ -82,6 +91,7 @@ class Verifier:
         self.task = task
         self.scen = scenarios(task)
         self.golden_scen = [_with_inputs(task.golden, sc) for sc in self.scen]
+        self.inputs = set(task.input_cells or [])  # template tasks: the whole Inputs sheet
 
     def _context(self, agent: Workbook) -> Workbook:
         """Golden model plus any scratch cells the agent added in empty space."""
@@ -95,7 +105,7 @@ class Verifier:
         s, a = cell
         content = agent.get(s, a)
         golden = self.task.golden
-        if s == "Inputs":
+        if (s, a) in self.inputs or (task_is_template(self.task) and s == "Inputs"):
             return _close(content, golden.get(s, a))
         trial = ctx.copy()
         trial.set(s, a, content)
@@ -108,11 +118,12 @@ class Verifier:
 
     def solved(self, agent: Workbook) -> bool:
         g = self.task.golden
-        if not all(_close(agent.value(s, a), g.value(s, a)) for s, a in KEY_OUTPUTS):
+        keys = self.task.key_outputs
+        if not all(_close(agent.value(s, a), g.value(s, a)) for s, a in keys):
             return False
         for sc, gs in zip(self.scen, self.golden_scen):
             ws = _with_inputs(agent, sc)
-            if not all(_close(ws.value(s, a), gs.value(s, a)) for s, a in KEY_OUTPUTS):
+            if not all(_close(ws.value(s, a), gs.value(s, a)) for s, a in keys):
                 return False
         return True
 
@@ -155,6 +166,10 @@ class Verifier:
         reward = integrity * (W_FIXED * fixed_fraction + W_SOLVED * float(solved))
         return RewardBreakdown(round(reward, 6), fixed_fraction, solved, integrity,
                                fixed, missed, damaged, benign, sorted(set(hardcoded)))
+
+
+def task_is_template(task: Task) -> bool:
+    return task.input_cells is None
 
 
 def score(task: Task, agent: Workbook) -> RewardBreakdown:

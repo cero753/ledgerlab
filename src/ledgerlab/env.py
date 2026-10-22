@@ -15,13 +15,12 @@ from __future__ import annotations
 
 from dataclasses import dataclass, field
 
-from .model import KEY_OUTPUTS
 from .rewards import RewardBreakdown, Verifier
 from .task import Task, generate
 from .workbook import CellError, Workbook, expand_range, is_formula, references, split_addr
 
 MAX_CELLS_PER_READ = 80
-STEP_BUDGET = {"easy": 25, "medium": 40, "hard": 60}
+STEP_BUDGET = {"easy": 25, "medium": 40, "hard": 60, "expert": 60}
 
 SYSTEM_PROMPT = """You are a meticulous financial-model reviewer.
 You are given a five-sheet operating model and DCF (Inputs, Revenue, PnL, CashFlow, DCF) plus a
@@ -86,12 +85,18 @@ class LedgerEnv:
 
     # ------------------------------------------------------------------ #
     def reset(self, seed: int) -> str:
-        self.task = generate(seed, self.difficulty)
+        return self.load(generate(seed, self.difficulty))
+
+    def load(self, task: Task) -> str:
+        """Start an episode on an existing task (e.g. a bring-your-own workbook)."""
+        self.task, self.difficulty = task, task.difficulty
         self.wb = self.task.workbook.copy()
         self.steps, self.done, self.result, self.log = 0, False, None, []
-        self.budget = self.max_steps or STEP_BUDGET[self.difficulty]
+        self.budget = self.max_steps or STEP_BUDGET.get(self.difficulty, 60)
         self._verifier = Verifier(self.task)
-        return (f"Review the model for {self.task.spec.company}. Start by reading the Notes sheet. "
+        if self.task.brief:
+            return f"{self.task.brief}\nYou have {self.budget} tool calls."
+        return (f"Review the model for {self.task.name}. Start by reading the Notes sheet. "
                 f"You have {self.budget} tool calls.")
 
     def step(self, name: str, args: dict | None = None) -> str:
@@ -175,10 +180,11 @@ class LedgerEnv:
                 content = float(content.replace(",", ""))
             except ValueError:
                 pass
-        before = {k: self.wb.value(*k) for k in KEY_OUTPUTS[-3:]}
+        watch = self.task.key_outputs[-3:]
+        before = {k: self.wb.value(*k) for k in watch}
         self.wb.set(sheet, cell, content)
         a = cell.upper().replace("$", "")
-        after = {k: self.wb.value(*k) for k in KEY_OUTPUTS[-3:]}
+        after = {k: self.wb.value(*k) for k in watch}
         delta = ", ".join(f"{s}!{x} {fmt(before[(s, x)])} -> {fmt(after[(s, x)])}"
                           for s, x in after if before[(s, x)] != after[(s, x)])
         return f"{sheet}!{a} = {fmt(self.wb.value(sheet, a))}" + (f" | {delta}" if delta else "")

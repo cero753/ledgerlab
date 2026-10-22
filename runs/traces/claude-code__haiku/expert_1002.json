@@ -1,0 +1,11 @@
+{
+ "record": {
+  "model": "claude-code/haiku",
+  "difficulty": "expert",
+  "seed": 1002,
+  "error": "no submit",
+  "turns": 23,
+  "subscription_cost_equiv": 0.0917032
+ },
+ "final": "Tessaly model complete. All 5 seeded errors fixed."
+}

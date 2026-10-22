@@ -23,13 +23,13 @@ from .workbook import CellError, Workbook
 DETECT_TOL = 1e-3  # relative change a bug must cause in some key output
 
 
-def outputs(wb: Workbook) -> list:
-    return [wb.value(s, a) for s, a in KEY_OUTPUTS]
+def outputs(wb: Workbook, keys=KEY_OUTPUTS) -> list:
+    return [wb.value(s, a) for s, a in keys]
 
 
 def outputs_differ(a: list, b: list, tol: float = DETECT_TOL) -> bool:
     for x, y in zip(a, b):
-        if isinstance(x, CellError) or isinstance(y, CellError):
+        if isinstance(x, (CellError, str)) or isinstance(y, (CellError, str)):
             if x != y:
                 return True
             continue
@@ -51,30 +51,35 @@ def apply_bugs(golden: Workbook, bugs: list[Bug]) -> Workbook:
 class Task:
     seed: int
     difficulty: str
-    spec: ModelSpec
+    spec: ModelSpec | None
     golden: Workbook
     bugs: list[Bug]
     workbook: Workbook = field(repr=False)
+    # Set for bring-your-own workbooks (byo.py); generated tasks use the model template.
+    key_outputs: list[tuple[str, str]] = field(default_factory=lambda: list(KEY_OUTPUTS))
+    input_cells: list[tuple[str, str]] | None = None
+    name: str = ""
+    brief: str = ""
 
     @property
     def bug_cells(self) -> set[tuple[str, str]]:
         return {c for b in self.bugs for c in b.cells}
 
 
-def _accept(golden: Workbook, bugs: list[Bug]) -> bool:
+def _accept(golden: Workbook, bugs: list[Bug], keys=KEY_OUTPUTS) -> bool:
     cells = [c for b in bugs for c in b.cells]
     if len(cells) != len(set(cells)):
         return False
-    base = outputs(golden)
+    base = outputs(golden, keys)
     buggy = apply_bugs(golden, bugs)
-    bo = outputs(buggy)
+    bo = outputs(buggy, keys)
     if any(isinstance(v, CellError) for v in bo):
         return False
     for i, b in enumerate(bugs):
-        if not outputs_differ(outputs(apply_bugs(golden, [b])), base):
+        if not outputs_differ(outputs(apply_bugs(golden, [b]), keys), base):
             return False
         rest = bugs[:i] + bugs[i + 1:]
-        if not outputs_differ(outputs(apply_bugs(golden, rest)), bo):
+        if not outputs_differ(outputs(apply_bugs(golden, rest), keys), bo):
             return False
     return True
 
@@ -86,9 +91,11 @@ def generate(seed: int, difficulty: str = "medium", max_tries: int = 500) -> Tas
     rng = random.Random(f"ledgerlab:{difficulty}:{seed}")
     for _ in range(max_tries):
         spec = sample_spec(rng)
-        golden = build(spec)
+        golden = build(spec, expert=difficulty == "expert")
+        if difficulty == "expert" and not golden.value("DCF", "B11") > 0:
+            continue  # decoys can push marginal companies negative; keep valuations sane
         kinds = rng.sample(pool, n_bugs)
         bugs = [k(golden, rng) for k in kinds]
         if _accept(golden, bugs):
-            return Task(seed, difficulty, spec, golden, bugs, apply_bugs(golden, bugs))
+            return Task(seed, difficulty, spec, golden, bugs, apply_bugs(golden, bugs), name=spec.company)
     raise RuntimeError(f"could not generate an acceptable task for seed={seed}")

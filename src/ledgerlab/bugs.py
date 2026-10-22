@@ -151,14 +151,77 @@ def terminal_not_discounted(g: Workbook, rng):
                "DCF!B8 terminal value not discounted back")
 
 
+# --------------------------------------------------------------------------- #
+# Expert tier: systematic (whole-row) and convention errors. A row that is wrong
+# in every column is internally consistent, so "find the odd formula out" no
+# longer works; the agent has to know what the line should compute.
+# --------------------------------------------------------------------------- #
+
+
+def _row(g: Workbook, sheet: str, row: int, fn) -> dict:
+    return {(sheet, f"{c}{row}"): fn(c, shift_col(c, -1), g.get(sheet, f"{c}{row}")) for c in FCST}
+
+
+def sys_tax_on_ebitda(g, rng):
+    t = INPUTS["tax"][0]
+    return Bug("sys_tax_on_ebitda", _row(g, "PnL", 9, lambda c, p, f: f"={c}6*Inputs!$B${t}"),
+               "PnL row 9 taxes EBITDA instead of EBIT in every year")
+
+
+def sys_cogs_uses_margin(g, rng):
+    m = INPUTS["gm"][0]
+    return Bug("sys_cogs_uses_margin", _row(g, "PnL", 3, lambda c, p, f: f"={c}2*Inputs!$B${m}"),
+               "PnL row 3 COGS = revenue x gross margin (should be x (1 - margin))")
+
+
+def sys_da_on_gross_profit(g, rng):
+    d = INPUTS["da"][0]
+    return Bug("sys_da_on_gross_profit", _row(g, "PnL", 7, lambda c, p, f: f"={c}4*Inputs!$B${d}"),
+               "PnL row 7 D&A driven off gross profit instead of revenue")
+
+
+def sys_capex_added(g, rng):
+    return Bug("sys_capex_added", _row(g, "CashFlow", 7, lambda c, p, f: f.replace(f"-{c}4", f"+{c}4")),
+               "CashFlow row 7 adds capex back in every year")
+
+
+def sys_nwc_change_reversed(g, rng):
+    return Bug("sys_nwc_change_reversed", _row(g, "CashFlow", 6, lambda c, p, f: f"={p}5-{c}5"),
+               "CashFlow row 6 NWC movement has the wrong sign (prior - current)")
+
+
+def sys_capex_prior_revenue(g, rng):
+    return Bug("sys_capex_prior_revenue",
+               _row(g, "CashFlow", 4, lambda c, p, f: f.replace(f"PnL!{c}2", f"PnL!{p}2")),
+               "CashFlow row 4 capex driven off prior-year revenue")
+
+
+def midyear_discounting(g, rng):
+    w = INPUTS["wacc"][0]
+    return Bug("midyear_discounting", _row(g, "DCF", 3, lambda c, p, f: f"=1/(1+Inputs!$B${w})^({c}2-0.5)"),
+               "DCF row 3 uses mid-year discounting; the house convention is end-of-year")
+
+
+def terminal_over_wacc(g, rng):
+    w, t = INPUTS["wacc"][0], INPUTS["tg"][0]
+    return Bug("terminal_over_wacc", {("DCF", "B7"): f"=CashFlow!G7*(1+Inputs!$B${t})/Inputs!$B${w}"},
+               "DCF!B7 Gordon growth divides by WACC instead of (WACC - g)")
+
+
 EASY = [hardcoded_plug, range_omission, sign_flip, crosslink_wrong, unit_mismatch]
 MEDIUM = EASY + [anchor_slip, period_mislink, growth_chain_break, nwc_level_not_change, tax_on_ebitda]
 HARD = MEDIUM + [discount_off_by_one, terminal_wrong_year, terminal_not_discounted]
+
+EXPERT_ONLY = [sys_tax_on_ebitda, sys_cogs_uses_margin, sys_da_on_gross_profit, sys_capex_added,
+               sys_nwc_change_reversed, sys_capex_prior_revenue, midyear_discounting, terminal_over_wacc]
+EXPERT = EXPERT_ONLY + [anchor_slip, unit_mismatch, discount_off_by_one, terminal_not_discounted, hardcoded_plug]
 
 TIERS = {
     "easy": (EASY, 1),
     "medium": (MEDIUM, 3),
     "hard": (HARD, 5),
+    "expert": (EXPERT, 4),
 }
 
 ALL_KINDS = [f.__name__ for f in HARD]
+EXPERT_KINDS = [f.__name__ for f in EXPERT]
