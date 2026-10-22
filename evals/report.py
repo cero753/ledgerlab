@@ -11,7 +11,7 @@ import pathlib
 import statistics
 
 ROOT = pathlib.Path(__file__).resolve().parents[1]
-TIERS = ["easy", "medium", "hard"]
+TIERS = ["easy", "medium", "hard", "expert"]
 
 
 def load(path):
@@ -72,7 +72,7 @@ def main(path=ROOT / "runs" / "results.jsonl"):
     for i, t in enumerate(TIERS):
         ax.bar([j + i * w for j in range(len(models))],
                [mean([r["reward"] for r in by[(m, t)]]) if by[(m, t)] else 0 for m in models],
-               w, label=t, color=["#7fb3d5", "#2e86c1", "#1b4f72"][i])
+               w, label=t, color=["#a9cce3", "#5dade2", "#2874a6", "#e08a2e"][i])
     ax.set_xticks([j + w for j in range(len(models))], [m.split("/")[-1] for m in models],
                   rotation=20, ha="right", fontsize=8)
     ax.set_ylabel("mean reward")

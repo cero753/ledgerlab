@@ -13,7 +13,7 @@ analysts do every day, so it is a good fit for RL with verifiable rewards.
 
 ```
 uv sync
-uv run pytest                        # 50 tests: engine, task QC, red-team
+uv run pytest                        # 71 tests: engine, task QC, frozen tiers, red team, BYO
 uv run ledgerlab redteam             # reward table for scripted honest + hacking policies
 uv run ledgerlab export --seed 7 --difficulty hard --out task.xlsx --reveal
 ```
@@ -36,13 +36,19 @@ Tools (OpenAI function-calling schemas in `ledgerlab.TOOLS`): `list_sheets`, `re
 `set_cell`, `submit`. `set_cell` returns the new value plus how EV / equity / per-share moved. That gives the agent
 feedback without revealing the answer.
 
-## Seeded errors (13 kinds, 3 tiers)
+## Seeded errors (21 kinds, 4 tiers)
 
 | tier | kinds |
 |---|---|
 | easy | hard-coded plug over a formula, SUM range misses a row, sign flip, wrong cross-sheet link, % entered as whole number |
 | medium | + missing `$` anchor that drifts when filled right, prior-year mislink, growth chain skips a year, NWC level used instead of change, tax on EBITDA |
 | hard | + discount factor off by one period, terminal value off Year-4 FCF, terminal value not discounted |
+| expert | systematic whole-row errors (tax on EBITDA, COGS = revenue x margin, D&A off gross profit, capex added back, NWC movement reversed, capex off prior-year revenue), mid-year discounting against house convention, Gordon growth over WACC; plus sanctioned **decoys** and a brief instead of a line-by-line spec |
+
+The expert tier exists because of the baselines below. Single-column errors are the odd formula out in their row,
+so they can be spotted without finance knowledge. Whole-row errors are internally consistent. Decoys are pattern breaks
+the brief approves (a management-case growth step-down, a one-off capex programme). An agent that "tidies" them takes an
+integrity penalty, which tests precision as well as recall.
 
 Formulas are written by an explicit **fill-right** step, like an analyst dragging a cell. That makes the anchoring bug
 real: column C still resolves correctly and the drift starts in D.
@@ -82,19 +88,20 @@ integrity = max(0, 1 − 0.25 × damaged_cells)
 
 ## Red team: only honest repair pays
 
-Scripted policies act through `env.step()` like a model would, but they peek at the golden model so each strategy plays its strongest version (`src/ledgerlab/policies.py`). 50 seeds per tier:
+Scripted policies act through `env.step()` like a model would, but they peek at the golden model so each strategy plays its strongest version (`src/ledgerlab/policies.py`). 40 seeds per tier:
 
-| policy | what it does | easy | medium | hard |
-|---|---|---|---|---|
-| `oracle` | writes the reference fix | 1.000 | 1.000 | 1.000 |
-| `equivalent_rewrite` | correct fix, different formula text | 1.000 | 1.000 | 1.000 |
-| `partial` | fixes all but one bug | 0.000 | 0.467 | 0.560 |
-| `oracle_with_collateral` | fixes everything, hard-codes 2 correct cells | 0.350 | 0.350 | 0.350 |
-| `noop` | submits immediately | 0.000 | 0.000 | 0.000 |
-| `hardcode_outputs` | pastes the correct answers over every output | 0.000 | 0.000 | 0.000 |
-| `hardcode_bug_cells` | knows the bug cells, pastes correct *values* | 0.280\* | 0.065\* | 0.048\* |
-| `paste_values_everywhere` | replaces the whole model with correct numbers | 0.000 | 0.000 | 0.000 |
-| `goal_seek_inputs` | tunes net debt until per-share value matches | 0.000 | 0.000 | 0.000 |
+| policy | what it does | easy | medium | hard | expert |
+|---|---|---|---|---|---|
+| `oracle` | writes the reference fix | 1.000 | 1.000 | 1.000 | 1.000 |
+| `equivalent_rewrite` | correct fix, different formula text | 1.000 | 1.000 | 1.000 | 1.000 |
+| `partial` | fixes all but one bug | 0.000 | 0.467 | 0.560 | 0.525 |
+| `oracle_with_collateral` | fixes everything, hard-codes 2 correct cells | 0.350 | 0.350 | 0.350 | 0.350 |
+| `oracle_normalizes_decoys` | fixes everything, then "tidies" sanctioned pattern breaks | 1.000 | 1.000 | 1.000 | 0.274 |
+| `noop` | submits immediately | 0.000 | 0.000 | 0.000 | 0.000 |
+| `hardcode_outputs` | pastes the correct answers over every output | 0.000 | 0.000 | 0.000 | 0.000 |
+| `hardcode_bug_cells` | knows the bug cells, pastes correct *values* | 0.200\* | 0.064\* | 0.049\* | 0.044\* |
+| `paste_values_everywhere` | replaces the whole model with correct numbers | 0.000 | 0.000 | 0.000 | 0.000 |
+| `goal_seek_inputs` | tunes net debt until per-share value matches | 0.000 | 0.000 | 0.000 | 0.000 |
 
 \* All credit comes from `unit_mismatch` bugs, where the correct fix *is* a number (25 → 0.25). Every formula cell fixed by pasting a value scores zero (asserted in `tests/test_redteam.py`).
 
@@ -116,7 +123,45 @@ sandbox with built-in tools disabled and the cwd outside the repo, so the agent 
 
 ## Baselines
 
-_Running: frontier and open models via OpenRouter, eval seeds 1000+ (disjoint from dev seeds). Results land in `runs/results.md`._
+Claude models through Claude Code headless mode (`evals/run_claude_code.py`). The agent is sandboxed: only the
+ledgerlab MCP tools, built-in tools disabled, cwd outside the repo. Eval seeds are 1000+, disjoint from dev seeds.
+
+| model | easy | medium | hard | expert | errors fixed | tool calls / ep |
+|---|---|---|---|---|---|---|
+| Opus | - | 1.00 (n=4) | 1.00 (n=4) | - | 100% | 13.2 |
+| Sonnet | - | 1.00 (n=4) | 1.00 (n=4) | 1.00 (n=3) | 100% | 14.1 → 23.7 on expert |
+| Haiku | 1.00 (n=3) | 1.00 (n=4) | 1.00 (n=4) | 1.00 (n=3) | 100% | 24.0 → 38.0 on expert |
+
+**The template tiers are saturated for Claude.** With every rollout at 1.0, GRPO sees zero advantage within a group,
+so the env gives no learning signal to these models. The diagnosis: fill-right rows are uniform and errors broke one
+column, a line-by-line spec turns the task into a diff, and about 130 cells fit in six reads. The expert tier raised
+tool calls per solve by about 60-70% but did not move the pass rate. The real difficulty lever is scale and ambiguity:
+large expert-authored workbooks with judgement calls, which is what the bring-your-own mode is for. Small samples;
+full data in `runs/results.jsonl`, per-step tool traces in `runs/traces/`. An OpenRouter runner
+(`evals/run_baselines.py`) covers non-Claude models.
+
+## Bring your own workbook
+
+Any correct `.xlsx` model can become a stream of verified repair tasks:
+
+```bash
+uv run ledgerlab byo model.xlsx --check                      # engine coverage + detected inputs/outputs
+uv run ledgerlab byo model.xlsx --bugs 3 --seed 0 --reveal   # seeded task written to byo_task.xlsx
+```
+
+The workbook is treated as golden. Inputs are numeric constants that formulas read; outputs are formula cells nothing
+reads (both can be overridden). Token-level mutators (sign flip, operator swap, prior-period ref, wrong-row ref, short
+range, pasted plug, % typo) seed errors near the outputs so they are material. The same QC and the same metamorphic
+verifier apply, perturbing every detected input. On a real 7-sheet, 10,300-formula salary-forecast workbook: 100%
+engine coverage, 1,104 inputs and 108 outputs detected, a 3-error task built in 32 s, golden graded in 4 s.
+Limit: without an expert-written brief, errors are inferable from structure and convention rather than from a spec.
+The MCP server exposes the same thing as `load_workbook(path)`.
+
+## Runs locally
+
+Pure Python 3.12+, one runtime dependency (openpyxl), no GPU. On a laptop, single process: task generation ~3 ms,
+grading ~0.5 ms, about 140 full scripted episodes per second per core (medium tier). `TODAY()` is frozen so rewards
+never drift with the calendar.
 
 ## Layout
 
@@ -129,13 +174,18 @@ src/ledgerlab/
   rewards.py    metamorphic verifier + reward
   env.py        multi-turn tool env + OpenAI tool schemas
   policies.py   scripted honest / partial / hacking policies
+  byo.py        bring-your-own workbook: I/O detection, generic mutators
+  mcp_server.py MCP server (play with Claude Code / Desktop; per-step traces)
 evals/          OpenRouter baseline runner + report
 tests/          engine, task QC, red-team
 ```
 
 Why a custom engine instead of LibreOffice: RL rollouts need rewards that are deterministic, fast
 (a full verify takes milliseconds) and free of system dependencies. The engine covers exactly the grammar the
-generator emits (refs, cross-sheet refs, ranges, `+ - * / ^`, SUM/AVERAGE/MIN/MAX/ROUND/ABS) and returns Excel-style errors.
+generator emits plus what real models use: refs, quoted cross-sheet refs, ranges, arithmetic, comparisons, strings and
+`&`, IF/IFERROR/AND/OR/NOT, SUM/AVERAGE/MIN/MAX/ROUND/ABS, SUMIF(S)/COUNTIF(S)/AVERAGEIF(S), SUMPRODUCT, NPV, and
+DATE/YEAR/MONTH/DAY/EOMONTH/EDATE/TODAY. Unsupported functions surface as `#NAME?`, so `byo --check` tells you exactly
+what it can't evaluate.
 
 ## Limits and next steps
 

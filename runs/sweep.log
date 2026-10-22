@@ -33,3 +33,6 @@ claude-code/haiku      expert seed=1001 reward=1.00 fixed=['terminal_over_wacc',
 claude-code/haiku      expert seed=1002 ERROR no submit
 claude-code/sonnet     expert seed=1001 reward=1.00 fixed=['terminal_over_wacc', 'anchor_slip', 'sys_tax_on_ebitda', 'sys_capex_added'] missed=[] calls=26
 claude-code/sonnet     expert seed=1002 reward=1.00 fixed=['terminal_not_discounted', 'sys_capex_added', 'sys_tax_on_ebitda', 'anchor_slip'] missed=[] calls=25
+2 episodes
+claude-code/haiku      expert seed=1000 reward=1.00 fixed=['unit_mismatch', 'sys_tax_on_ebitda', 'terminal_over_wacc', 'anchor_slip'] missed=[] calls=31
+claude-code/haiku      expert seed=1002 reward=1.00 fixed=['terminal_not_discounted', 'sys_capex_added', 'sys_tax_on_ebitda', 'anchor_slip'] missed=[] calls=31
