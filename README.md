@@ -100,6 +100,20 @@ Scripted policies act through `env.step()` like a model would, but they peek at 
 
 These are pytest assertions. Any reward change that opens a hack fails CI.
 
+## Play it with Claude (no API key)
+
+ledgerlab ships an MCP server, so Claude Code or Claude Desktop can work a task directly on your normal Claude login:
+
+```bash
+uv sync --extra mcp
+claude mcp add ledgerlab -- uv run --directory /path/to/ledgerlab --extra mcp ledgerlab-mcp
+claude   # then: "Start a hard ledgerlab task with seed 1007, fix every error, then submit."
+```
+
+`submit` returns the graded breakdown: which seeded errors were fixed or missed, any collateral damage, and any hard-coded cells.
+For a headless sweep on your subscription, run `uv run python evals/run_claude_code.py --models haiku sonnet opus`. Each episode runs in a
+sandbox with built-in tools disabled and the cwd outside the repo, so the agent can't read the grader.
+
 ## Baselines
 
 _Running: frontier and open models via OpenRouter, eval seeds 1000+ (disjoint from dev seeds). Results land in `runs/results.md`._
